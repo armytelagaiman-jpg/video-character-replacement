@@ -12,7 +12,7 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="brand"><div class="logo">V</div><div><b>VIDEO CHARACTER REPLACEMENT</b><small>Prompt Architect · Interactive Prototype v0.4</small></div></div>
+  <div class="brand"><div class="logo">V</div><div><b>VIDEO CHARACTER REPLACEMENT</b><small>Prompt Architect · Interactive Prototype v0.5</small></div></div>
   <h1>Bangun prompt penggantian karakter video.</h1>
   <p class="intro">Ikuti langkah demi langkah. Pilihanmu akan dirangkum menjadi prompt siap salin. Prototipe ini hanya mengatur konfigurasi dan menyusun prompt — bukan mengedit atau menghasilkan video/gambar.</p>
   <div class="progress" id="progress"></div><div class="steptext" id="steptext"></div>
@@ -116,6 +116,39 @@ Satu character sheet multi-panel yang padat informasi, terstruktur, bersih, prem
 function makePrompt(){
 const targets=S.targets.map((t,i)=>`Target ${i+1}: ${t.description}.`).join("\n");
 const overlay=S.overlay==="preserve"?"Pertahankan seluruh teks, subtitle, caption, logo, watermark, ikon, stiker, emoji, GIF, bingkai, dan elemen grafis persis seperti video sumber. Jangan menghapus atau mengubahnya.":`Hapus hanya elemen yang dipilih: ${S.removeItems.join(", ")}. ${S.overlayNotes}. Semua elemen lain wajib dipertahankan.`;
+if(S.outfit==="reference"){
+return `Ganti karakter target dalam video dengan karakter yang sama persis seperti pada foto referensi dan Character Sheet yang telah disetujui (jika digunakan). Foto referensi adalah sumber utama identitas dan penampilan karakter pengganti.
+
+TARGET
+${targets}
+Jangan mengganti karakter lain yang tidak dipilih.
+
+KUNCI IDENTITAS WAJAH — PRIORITAS TERTINGGI
+Wajah karakter pengganti HARUS sama persis dan semirip mungkin dengan orang pada foto referensi asli. Jangan membuat wajah baru, wajah generik, atau wajah yang sekadar mirip. Pertahankan bentuk dan proporsi wajah, kepala, dahi, garis rambut, mata, kelopak, alis, hidung, pipi, rahang, dagu, telinga, bibir, philtrum, susunan gigi yang terlihat, warna dan tekstur kulit, tanda khas, serta asimetri alami. Jangan mempercantik, meniruskan, memutihkan, mengubah usia, atau mengubah fitur wajah.
+Foto referensi wajah asli adalah otoritas tertinggi untuk identitas wajah. Character Sheet yang disetujui menjadi acuan tambahan untuk konsistensi sudut, ekspresi, rambut, dan tampilan; jika ada perbedaan, ikuti foto referensi asli untuk wajah. Jangan menggabungkan atau merata-ratakan wajah dari beberapa orang. Semua frame dan ekspresi harus tetap jelas merupakan orang yang sama.
+
+PENAMPILAN & OUTFIT — FOTO REFERENSI ADALAH ACUAN MUTLAK DARI UJUNG KEPALA HINGGA UJUNG KAKI
+Salin penampilan karakter dari foto referensi/Character Sheet yang disetujui secara setia dan menyeluruh, bukan hanya pakaiannya. Pertahankan rambut dan gaya rambut, belahan dan panjang rambut, warna rambut, aksesori kepala, bentuk tubuh dan proporsi yang terlihat, pakaian lapisan luar dan dalam, kerah, lengan, potongan, bahan, tekstur, warna, motif, detail jahitan, ikat pinggang, bawahan, kaus kaki, sepatu, tas, perhiasan, jam tangan, kacamata, serta seluruh aksesori yang tampak.
+Seluruh outfit dan detail penampilan dari kepala sampai kaki harus sama dengan referensi. Jangan mengganti, menghilangkan, menambah, menyederhanakan, mengubah warna, atau menafsirkan ulang bagian mana pun. Jangan mengambil outfit dari video sumber. Jangan mencampur pakaian atau aksesori dari referensi yang berbeda. Jika Character Sheet menampilkan tampilan yang telah disetujui, ikuti tampilan tersebut secara konsisten; foto referensi asli tetap menjadi acuan identitas wajah.
+Jika detail tertentu tidak terlihat atau tidak dapat dipastikan dari referensi, jangan mengarang detail baru. Pertahankan bagian yang terlihat dan gunakan pilihan paling setia pada sumber.
+
+BACKGROUND & VIDEO
+${S.background==="original"?"Pertahankan background, lokasi, properti, dan lingkungan asli dari video sumber. Jangan menggantinya dengan background foto referensi.":"Gunakan background dari foto referensi yang dipilih pengguna secara setia; jangan menciptakan ulang atau menambahkan elemen yang tidak terlihat."}
+Pertahankan komposisi, sudut dan gerakan kamera, framing, pencahayaan, bayangan, refleksi, filter, efek, tone warna, suasana, durasi, timing, serta seluruh objek dan karakter lain sesuai pilihan background. Jangan mengubah elemen yang tidak dipilih untuk diganti.
+
+GERAKAN & INTEGRASI
+Pertahankan gerakan tubuh, gestur, arah pandang, ekspresi, dan timing karakter target dari video sumber. Terapkan penampilan karakter referensi secara konsisten pada semua frame dan sudut. Integrasikan secara natural dengan perspektif, pencahayaan, dan bayangan adegan. Pertahankan sinkronisasi bibir jika didukung aplikasi eksternal.
+
+GAYA VISUAL
+Gunakan gaya ${S.style==="realistic"?"Realistic Human":S.style==="3d"?"3D Animation":S.style==="manhwa"?"Premium Semi-Realistic Korean Manhwa":"natural"} sesuai pilihan, tetapi jangan biarkan stilisasi mengubah identitas wajah atau desain outfit. Prioritas utama tetap kemiripan wajah dan kesetiaan penampilan terhadap foto referensi. Jangan mengubah proporsi wajah untuk menyesuaikan gaya.
+
+TULISAN & ELEMEN DIGITAL
+${overlay}
+Tulisan atau tanda yang merupakan bagian fisik dari lokasi, benda, pakaian, atau objek dalam rekaman harus tetap dipertahankan kecuali secara khusus dipilih untuk dihapus.
+
+NEGATIVE PROMPT
+No face redesign, no different face, no generic face, no identity drift, no face beautification, no face slimming, no age change, no skin tone change, no facial feature changes, no hairstyle change, no outfit redesign, no outfit transfer from source video, no clothing variation, no missing accessories, no added accessories, no color changes, no pattern changes, no shoe changes, no body proportion changes, no mixing references, no invented details, no background changes beyond selected option, no changes to unselected characters, no camera changes, no lighting changes, no scene changes.`;
+}
 if(S.outfit==="video"&&S.background==="original"){
 return `Ganti HANYA wajah karakter target dalam video menggunakan identitas wajah dari foto referensi masing-masing.
 
