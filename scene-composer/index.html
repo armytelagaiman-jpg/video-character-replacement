@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Motionkan Scene Composer</title>
+<style>
+:root{--bg:#090b12;--panel:#121725;--panel2:#192235;--line:#29364d;--text:#f3f6ff;--muted:#a8b3c8;--green:#b6ff35;--purple:#a78bfa;--danger:#ff8295}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 10% 0%,#1b2940 0,transparent 42%),radial-gradient(ellipse at 90% 10%,#24163b 0,transparent 38%),var(--bg);color:var(--text);font:15px/1.55 Inter,system-ui,Arial}
+.wrap{max-width:1100px;margin:auto;padding:28px 18px 60px}.brand{display:flex;align-items:center;gap:12px;margin-bottom:25px}.logo{width:46px;height:46px;border-radius:14px;background:linear-gradient(135deg,var(--green),var(--purple));display:grid;place-items:center;color:#10131b;font-weight:900;font-size:20px}.brand small{display:block;color:var(--muted)}h1{font-size:clamp(26px,4vw,38px);line-height:1.15;margin:0 0 8px}.intro{color:var(--muted);max-width:800px;margin:0 0 24px}.card{background:linear-gradient(180deg,#151d2d,#101624);border:1px solid var(--line);border-radius:20px;padding:22px;margin:16px 0;box-shadow:0 18px 55px #0003}.card h2{font-size:20px;margin:0 0 5px}.hint{font-size:13px;color:var(--muted);margin:4px 0 14px}.field{margin:14px 0}.field label,.row label{display:block;font-weight:650;margin-bottom:6px}.field input[type=text],.field input[type=number],.field textarea,.field select,.row input,.row select,.row textarea{width:100%;background:#0b1220;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:11px;font:inherit}.field textarea{min-height:85px;resize:vertical}.upload{display:block;border:1px dashed #64728c;border-radius:13px;background:#0b1220;padding:15px;color:var(--muted)}input[type=file]{max-width:100%;color:var(--muted)}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.choice{background:var(--panel2);border:1px solid var(--line);color:var(--text);border-radius:13px;padding:14px;text-align:left;cursor:pointer}.choice.selected{border:2px solid var(--green);background:#1c2b2a}.choice b{display:block}.choice span{display:block;color:var(--muted);font-size:13px}.character{border:1px solid var(--line);border-radius:14px;padding:15px;margin:12px 0;background:#0d1422}.character-head{display:flex;align-items:center;justify-content:space-between;gap:10px}.preview{display:flex;gap:9px;flex-wrap:wrap;margin-top:10px}.preview img{width:82px;height:100px;object-fit:cover;border-radius:9px;border:1px solid var(--line)}.timeline-head,.timeline-row{display:grid;grid-template-columns:220px 1fr 42px;gap:12px;align-items:end}.timeline-head{color:var(--muted);font-size:13px;font-weight:700;padding:0 4px 8px}.timeline-row{background:#0d1422;border:1px solid var(--line);border-radius:13px;padding:12px;margin:9px 0}.time-inputs{display:grid;grid-template-columns:1fr 1fr;gap:7px}.row small{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}.row select,.row input{padding:10px}.row .custom{margin-top:8px}.btn{border:0;border-radius:11px;padding:11px 16px;font-weight:750;cursor:pointer}.primary{background:var(--green);color:#10141a}.secondary{background:#29354c;color:var(--text)}.danger{background:#47202b;color:#ffdce2}.actions{display:flex;gap:9px;flex-wrap:wrap;margin-top:15px}.notice{background:#211b36;border-left:3px solid var(--purple);padding:11px 13px;border-radius:8px;color:#e3dcff;margin:12px 0}.lock{background:#16251f;border-left:3px solid var(--green);padding:13px;border-radius:8px;color:#e2ffc9}.prompt{white-space:pre-wrap;background:#080d17;border:1px solid var(--line);border-radius:12px;padding:16px;max-height:540px;overflow:auto;font:13px/1.65 ui-monospace,monospace}.muted{color:var(--muted)}.footer{font-size:12px;color:var(--muted);margin-top:22px}@media(max-width:700px){.timeline-head{display:none}.timeline-row{grid-template-columns:1fr 38px}.timeline-row .time-col,.timeline-row .action-col{grid-column:1}.timeline-row .remove{grid-column:2;grid-row:1}.card{padding:16px}}
+</style>
+</head>
+<body><main class="wrap">
+<header class="brand"><div class="logo">M</div><div><b>MOTIONKAN.AI</b><small>SCENE COMPOSER · VIDEO PROMPT BUILDER</small></div></header>
+<h1>Tambahkan karakter ke dalam adegan video.</h1>
+<p class="intro">Atur karakter, pilih aksi, dan tentukan detik kemunculannya. Susun beberapa aksi dalam satu timeline, lalu hasilkan prompt final yang siap disalin ke video generator pilihanmu.</p>
+
+<section class="card">
+<h2>1. Video referensi</h2><p class="hint">Opsional. Pilih video sumber sebagai acuan adegan. File hanya dipratinjau di browser dan tidak diunggah ke server.</p>
+<div class="field"><label>Upload video</label><div class="upload"><input id="videoFile" type="file" accept="video/*"><div id="videoPreview" class="preview"></div></div></div>
+<div class="field"><label>Catatan adegan (opsional)</label><textarea id="sceneNotes" placeholder="Jelaskan lokasi, suasana, posisi karakter asli, kamera, atau detail adegan yang perlu dipertahankan..."></textarea></div>
+</section>
+
+<section class="card">
+<h2>2. Karakter tambahan</h2><p class="hint">Pilih jumlah karakter yang ingin ditambahkan. Unggah foto referensi masing-masing agar identitasnya tidak tertukar.</p>
+<div class="grid" id="countChoices">
+<button class="choice selected" data-count="1"><b>1 karakter</b><span>Tambahkan satu karakter baru.</span></button>
+<button class="choice" data-count="2"><b>2 karakter</b><span>Tambahkan dua karakter dengan referensi terpisah.</span></button>
+<button class="choice" data-count="3"><b>3 karakter</b><span>Tambahkan tiga karakter dengan referensi terpisah.</span></button>
+</div>
+<div id="characters"></div>
+</section>
+
+<section class="card">
+<h2>3. Scene Timeline</h2><p class="hint">Isi rentang detik, pilih karakter yang bertindak, lalu pilih tindakan. Kolom tindakan sengaja dikosongkan sampai user memilihnya. Tambahkan baris sebanyak yang diperlukan.</p>
+<div class="timeline-head"><div>WAKTU (DETIK)</div><div>KARAKTER & TINDAKAN</div><div></div></div>
+<div id="timeline"></div>
+<div class="actions"><button class="btn secondary" id="addRow">＋ Tambah Adegan</button><button class="btn danger" id="clearRows">Kosongkan Timeline</button></div>
+<div class="notice">Tips: aksi boleh tumpang tindih waktunya. Contohnya Karakter A berjoget pada detik 5–12, sementara Karakter B mengganggunya pada detik 8–10.</div>
+</section>
+
+<section class="card">
+<h2>4. Perlindungan identitas & adegan</h2>
+<div class="lock"><b>STRICT FACE & CHARACTER PRESERVATION LOCK — AKTIF</b><br>Wajah semua karakter asli dalam video wajib dipertahankan. Jangan menghapus, mengganti, mengubah, mencampur, atau mengurangi visibilitas karakter asli. Setiap karakter tambahan harus mempertahankan identitas wajah sesuai foto referensinya. Penambahan karakter tidak boleh mengorbankan karakter yang sudah ada.</div>
+<div class="field"><label>Instruksi tambahan (opsional)</label><textarea id="extraRules" placeholder="Contoh: kamera tetap, jangan menutupi wajah karakter utama, karakter baru masuk dari sisi kanan..."></textarea></div>
+</section>
+
+<section class="card">
+<h2>5. Final Prompt</h2><p class="hint">Prompt akan dibuat dari referensi, karakter, pilihan aksi, dan timeline di atas.</p>
+<div class="actions"><button class="btn primary" id="generate">✨ Generate Final Prompt</button><button class="btn secondary" id="copy" disabled>Salin Prompt</button></div>
+<div id="promptOutput" class="prompt" style="margin-top:14px">Prompt final akan muncul di sini setelah tombol Generate Final Prompt ditekan.</div>
+</section>
+<p class="footer">Motionkan.AI · Prototype v1.0 · Berjalan di browser. File video dan foto tidak dikirim ke server. Prompt membantu mengarahkan video generator, tetapi tidak menjamin hasil wajah 100% identik; hasil akhir tetap bergantung pada model video yang digunakan.</p>
+</main>
+<script>
+const actions={
+"💃 Gerakan":["Berjoget mengikuti irama musik","Mengikuti gerakan karakter lain","Berjalan mendekati karakter lain","Masuk ke dalam adegan","Keluar dari adegan","Melompat","Berputar","Melambaikan tangan","Duduk","Berdiri","Menari bersama karakter lain"],
+"😂 Ekspresi & reaksi":["Tertawa","Terkejut","Kebingungan","Marah","Menangis","Tersenyum","Menatap karakter lain","Bereaksi terhadap kejadian"],
+"😜 Interaksi":["Mengganggu karakter lain","Mengusili karakter lain","Mengajak karakter lain berjoget","Berbicara dengan karakter lain","Menepuk bahu karakter lain","Memberikan sesuatu kepada karakter lain","Menghindari karakter lain","Mengejar karakter lain"],
+"✍️ Aksi khusus":["Tindakan buatan sendiri"]
+};
+let characterCount=1, rowCount=0, promptText="";
+const $=id=>document.getElementById(id);
+const characters=$("characters"),timeline=$("timeline");
+function renderCharacters(){
+ characters.innerHTML="";
+ for(let i=1;i<=characterCount;i++){
+ const box=document.createElement("div");box.className="character";
+ box.innerHTML='<div class="character-head"><b>Karakter '+String.fromCharCode(64+i)+'</b><span class="muted">Referensi identitas</span></div><div class="field"><label>Foto referensi karakter '+String.fromCharCode(64+i)+'</label><div class="upload"><input type="file" accept="image/*" multiple data-character="'+i+'"><div class="preview" id="charPreview'+i+'"></div></div></div><div class="field"><label>Deskripsi tambahan (opsional)</label><input type="text" id="charDesc'+i+'" placeholder="Contoh: wanita berjaket merah, rambut panjang..."></div>';
+ characters.appendChild(box);
+ }
+ characters.querySelectorAll("[data-character]").forEach(input=>input.addEventListener("change",()=>{
+ const id=input.dataset.character, files=[...input.files].slice(0,5), preview=$("charPreview"+id);
+ preview.innerHTML="";
+ files.forEach(f=>{const img=document.createElement("img");img.src=URL.createObjectURL(f);img.alt="Referensi karakter";preview.appendChild(img)});
+ if(input.files.length>5)alert("Maksimal 5 foto referensi per karakter.");
+ }));
+}
+function characterOptions(){return Array.from({length:characterCount},(_,i)=>'<option value="'+(i+1)+'">Karakter '+String.fromCharCode(65+i)+'</option>').join("")+'<option value="all">Semua karakter</option>'}
+function actionOptions(){return '<option value="">Pilih tindakan...</option>'+Object.entries(actions).map(([group,items])=>'<optgroup label="'+group+'">'+items.map(a=>'<option value="'+a.replace(/"/g,'&quot;')+'">'+a+'</option>').join("")+'</optgroup>').join("")}
+function addRow(){
+ rowCount++;const id=rowCount,el=document.createElement("div");el.className="timeline-row";el.dataset.row=id;
+ el.innerHTML='<div class="row time-col"><label>Rentang waktu</label><div class="time-inputs"><div><small>Detik mulai</small><input type="number" min="0" step="0.1" placeholder="00" data-start></div><div><small>Detik selesai</small><input type="number" min="0" step="0.1" placeholder="03" data-end></div></div></div><div class="row action-col"><label>Karakter & tindakan</label><select data-actor>'+characterOptions()+'</select><select data-action style="margin-top:8px">'+actionOptions()+'</select><textarea class="custom hidden" data-custom placeholder="Tuliskan tindakan karakter sendiri..."></textarea><input class="custom hidden" data-target placeholder="Karakter lain yang menjadi sasaran (opsional), misalnya Karakter B" style="margin-top:8px"></div><button class="btn danger remove" type="button" title="Hapus adegan">×</button>';
+ timeline.appendChild(el);
+ const act=el.querySelector("[data-action]"),custom=el.querySelector("[data-custom]");
+ act.addEventListener("change",()=>{const isCustom=act.value==="Tindakan buatan sendiri";custom.classList.toggle("hidden",!isCustom);});
+ el.querySelector("[data-actor]").addEventListener("change",()=>{});
+ el.querySelector(".remove").addEventListener("click",()=>el.remove());
+}
+$("countChoices").querySelectorAll("[data-count]").forEach(btn=>btn.addEventListener("click",()=>{characterCount=Number(btn.dataset.count);$("countChoices").querySelectorAll(".choice").forEach(b=>b.classList.toggle("selected",b===btn));renderCharacters();timeline.querySelectorAll("[data-actor]").forEach(sel=>{const old=sel.value;sel.innerHTML=characterOptions();if([...sel.options].some(o=>o.value===old))sel.value=old;});}));
+$("addRow").addEventListener("click",addRow);
+$("clearRows").addEventListener("click",()=>{timeline.innerHTML="";});
+$("videoFile").addEventListener("change",e=>{const f=e.target.files[0];$("videoPreview").innerHTML="";if(f){const v=document.createElement("video");v.controls=true;v.src=URL.createObjectURL(f);v.style.maxWidth="100%";v.style.maxHeight="230px";$("videoPreview").appendChild(v);}});
+function getPrompt(){
+ const video=$("videoFile").files[0]?.name||"Tidak ada video yang diunggah";
+ const rows=[...timeline.querySelectorAll(".timeline-row")];
+ if(!rows.length)throw Error("Tambahkan minimal satu baris timeline.");
+ const lines=[];
+ rows.forEach((r,i)=>{
+ const start=r.querySelector("[data-start]").value,end=r.querySelector("[data-end]").value,actor=r.querySelector("[data-actor]").value,selected=r.querySelector("[data-action]").value,custom=r.querySelector("[data-custom]").value.trim(),target=r.querySelector("[data-target]").value.trim();
+ if(start===""||end==="")throw Error("Lengkapi detik mulai dan detik selesai pada baris "+(i+1)+".");
+ if(Number(end)<=Number(start))throw Error("Detik selesai harus lebih besar daripada detik mulai pada baris "+(i+1)+".");
+ if(!selected)throw Error("Pilih tindakan pada baris "+(i+1)+".");
+ const action=selected==="Tindakan buatan sendiri"?custom:selected;
+ if(!action)throw Error("Isi tindakan khusus pada baris "+(i+1)+".");
+ lines.push("Detik "+start+"–"+end+" | "+(actor==="all"?"Semua karakter":"Karakter "+String.fromCharCode(64+Number(actor)))+" | "+action+(target?" (sasaran: "+target+")":""));
+ });
+ const refs=[];
+ for(let i=1;i<=characterCount;i++){
+ const files=$('input[data-character="'+i+'"]').files;
+ const desc=$("charDesc"+i).value.trim();
+ refs.push("Karakter "+String.fromCharCode(64+i)+": foto referensi "+(files.length?files.length+" file terpilih":"belum diunggah")+(desc?"; deskripsi: "+desc:"")+".");
+ }
+ return `PROMPT PENAMBAHAN KARAKTER KE DALAM VIDEO
+
+VIDEO SUMBER
+Nama file: ${video}
+Catatan adegan: ${$("sceneNotes").value.trim()||"Gunakan video sumber sebagai acuan utama untuk lokasi, komposisi, gerakan kamera, pencahayaan, suasana, dan kontinuitas adegan."}
+
+KARAKTER TAMBAHAN & REFERENSI IDENTITAS
+Jumlah karakter tambahan: ${characterCount}
+${refs.join("\n")}
+Setiap foto referensi hanya berlaku untuk karakter yang ditetapkan. Jangan mencampur atau menukar identitas antar karakter. Pertahankan wajah, bentuk wajah, mata, hidung, bibir, rahang, warna kulit, rambut, ciri khas, dan proporsi masing-masing sesuai referensi. Jaga konsistensi identitas pada seluruh frame, sudut, ekspresi, dan gerakan.
+
+TIMELINE AKSI
+${lines.join("\n")}
+Ikuti waktu mulai dan selesai setiap aksi secara akurat. Aksi yang rentang waktunya tumpang tindih harus berlangsung bersamaan secara terkoordinasi. Pastikan posisi, arah gerak, jarak, kontak, dan reaksi antar karakter masuk akal secara fisik. Jangan menghilangkan aksi atau menukar pelakunya.
+
+FACE & CHARACTER PRESERVATION LOCK — PRIORITAS TERTINGGI
+Pertahankan SEMUA karakter asli yang sudah ada dalam video sumber. Jangan menghapus, mengganti, mengubah, menutupi secara tidak perlu, mengurangi jumlah, atau menggabungkan wajah mereka. Jangan mengubah identitas wajah, ekspresi alami, pakaian, tubuh, posisi, atau gerakan karakter asli kecuali secara eksplisit diminta. Karakter tambahan harus ditambahkan ke dalam adegan, bukan menggantikan karakter yang sudah ada. Jangan sampai wajah karakter asli atau karakter tambahan tertukar, tercampur, terdistorsi, atau berubah sepanjang video. Jaga wajah setiap karakter tetap terlihat saat memungkinkan dan jangan menutupi wajah karakter lain ketika berinteraksi.
+
+INTEGRASI VISUAL & KONTINUITAS
+Tempatkan karakter tambahan secara realistis sesuai perspektif, skala, kedalaman, pencahayaan, bayangan, refleksi, dan ruang adegan. Pertahankan video asli, latar, properti, kamera, framing, gerakan kamera, tone warna, musik, audio, dan karakter asli. Jangan mengubah bagian yang tidak diminta. Gerakan harus natural, berkesinambungan, dan tidak saling menembus atau bertabrakan secara tidak wajar.
+
+INSTRUKSI TAMBAHAN
+${$("extraRules").value.trim()||"Tidak ada instruksi tambahan."}
+
+NEGATIVE PROMPT
+No face replacement of original characters, no missing original characters, no identity swap, no face blending, no face morphing, no identity drift, no face distortion, no unintended outfit changes, no extra people, no duplicate characters, no obstructed faces, no unnatural body interaction, no clipping, no teleportation, no random camera movement, no scene alteration beyond requested additions.
+
+HASIL YANG DIINGINKAN
+Hasilkan video dengan karakter tambahan dan aksi sesuai timeline, sambil mempertahankan seluruh karakter asli dan kesinambungan adegan. Prompt ini merupakan instruksi untuk video generator eksternal; keberhasilan mempertahankan identitas bergantung pada kemampuan model yang digunakan.`;
+}
+$("generate").addEventListener("click",()=>{try{promptText=getPrompt();$("promptOutput").textContent=promptText;$("copy").disabled=false;$("promptOutput").scrollIntoView({behavior:"smooth",block:"nearest"});}catch(e){alert(e.message)}});
+$("copy").addEventListener("click",async()=>{try{await navigator.clipboard.writeText(promptText);$("copy").textContent="Tersalin ✓";setTimeout(()=>$("copy").textContent="Salin Prompt",1600);}catch(e){alert("Browser tidak mengizinkan salin otomatis. Pilih teks prompt lalu salin manual.")}});
+renderCharacters();addRow();
+</script></body></html>
