@@ -18,7 +18,7 @@
 <section class="card">
 <h2>1. Video referensi</h2><p class="hint">Opsional. Pilih video sumber sebagai acuan adegan. File hanya dipratinjau di browser dan tidak diunggah ke server.</p>
 <div class="field"><label>Upload video</label><div class="upload"><input id="videoFile" type="file" accept="video/*"><div id="videoPreview" class="preview"></div></div></div>
-<div class="field"><label>Catatan adegan (opsional)</label><textarea id="sceneNotes" placeholder="Jelaskan lokasi, suasana, posisi karakter asli, kamera, atau detail adegan yang perlu dipertahankan..."></textarea></div>
+
 </section>
 
 <section class="card">
@@ -182,7 +182,7 @@ function getPrompt(){
 
 VIDEO SUMBER
 Nama file: ${video}
-Catatan adegan: ${$("sceneNotes").value.trim()||"Gunakan video sumber sebagai acuan utama untuk lokasi, komposisi, gerakan kamera, pencahayaan, suasana, dan kontinuitas adegan."}
+Gunakan video sumber sebagai acuan utama untuk lokasi, komposisi, gerakan kamera, pencahayaan, suasana, dan kontinuitas adegan.
 
 KARAKTER TAMBAHAN & REFERENSI IDENTITAS
 Jumlah karakter tambahan: ${characterCount}
