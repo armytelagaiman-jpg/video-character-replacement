@@ -12,7 +12,7 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="brand"><div class="logo">V</div><div><b>VIDEO CHARACTER REPLACEMENT</b><small>Prompt Architect · Interactive Prototype v0.6</small></div></div>
+  <div class="brand"><div class="logo">V</div><div><b>VIDEO CHARACTER REPLACEMENT</b><small>Prompt Architect · Interactive Prototype v0.7</small></div></div>
   <h1>Bangun prompt penggantian karakter video.</h1>
   <p class="intro">Ikuti langkah demi langkah. Pilihanmu akan dirangkum menjadi prompt siap salin. Prototipe ini hanya mengatur konfigurasi dan menyusun prompt — bukan mengedit atau menghasilkan video/gambar.</p>
   <div class="progress" id="progress"></div><div class="steptext" id="steptext"></div>
@@ -124,6 +124,7 @@ return "REGENERATE / PERBAIKI CHARACTER SHEET — KESALAHAN UTAMA: OUTFIT SALAH.
 function makePrompt(){
 const targets=S.targets.map((t,i)=>`Target ${i+1}: ${t.description}.`).join("\n");
 const overlay=S.overlay==="preserve"?"Pertahankan seluruh teks, subtitle, caption, logo, watermark, ikon, stiker, emoji, GIF, bingkai, dan elemen grafis persis seperti video sumber. Jangan menghapus atau mengubahnya.":`Hapus hanya elemen yang dipilih: ${S.removeItems.join(", ")}. ${S.overlayNotes}. Semua elemen lain wajib dipertahankan.`;
+const qualityRule="Jika kualitas video sumber kurang jernih, lakukan peningkatan kualitas gambar secara hati-hati: kurangi noise dan blur ringan, perjelas detail yang memang sudah ada, tingkatkan kejernihan dan resolusi bila alat mendukung. JANGAN mengarang detail baru atau mengubah isi video. Setiap frame harus tetap menggambarkan adegan, orang, ekspresi, gerakan, objek, pakaian, warna, pencahayaan, filter, efek, komposisi, kamera, durasi, dan timing yang sama persis dengan sumber. Jangan mengganti, menambah, menghapus, memindahkan, atau mengubah apa pun di dalam adegan. Jangan melakukan beautification, face restoration yang mengubah identitas, perubahan warna, re-lighting, stabilisasi yang mengubah framing, crop, atau interpolasi gerakan yang mengubah timing. Hasil hanya boleh lebih bersih dan lebih jelas, bukan berbeda.";
 if(S.outfit==="reference"){
 return `Ganti karakter target dalam video dengan karakter yang sama persis seperti pada foto referensi dan Character Sheet yang telah disetujui (jika digunakan). Foto referensi adalah sumber utama identitas dan penampilan karakter pengganti.
 
