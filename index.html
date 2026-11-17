@@ -156,45 +156,32 @@ async function analyzeTargetCaptures(index){
 function renderIdentityConfirmation(index){
  const target=S.targets[index],host=document.getElementById("identitycheck"+index);
  if(!host||!target?.analysis)return;
- const a=target.analysis;
- if(!a.candidateAnswers)a.candidateAnswers={};
+ const a=target.analysis;if(!a.candidateAnswers)a.candidateAnswers={};
  const readiness=a.results.map((r,i)=>{
   const answers=r.candidates.map(p=>a.candidateAnswers[i+':'+p.index]||'');
-  const yesCount=answers.filter(x=>x==='yes').length;
-  return {complete:answers.length>0&&answers.every(x=>x==='yes'||x==='no'),oneYes:yesCount===1,yesCount};
+  return {complete:answers.length>0&&answers.every(x=>x==='yes'||x==='no'),yesCount:answers.filter(x=>x==='yes').length};
  });
- const allReady=readiness.length>0&&readiness.every(x=>x.complete&&x.oneYes);
+ const allReady=readiness.length>0&&readiness.every(x=>x.complete&&x.yesCount>=1);
  a.identityVerified=allReady;
- a.selections=allReady?a.results.map((r,i)=>Number(r.candidates.find(p=>a.candidateAnswers[i+':'+p.index]==='yes').index)):a.results.map(()=>null);
- host.innerHTML='<h4 style="margin:12px 0 6px">Periksa setiap kandidat</h4><p class="hint">Pada setiap capture, pilih satu orang yang menjadi target dengan tombol Ya. Saat Bunda memilih Ya, kandidat lain di capture yang sama otomatis menjadi Tidak. Jadi cukup satu Ya untuk setiap capture.</p>'+
- a.results.map((r,i)=>{
-  return '<div class="identity-capture"><b>Capture '+(i+1)+'</b><div class="identity-options">'+r.candidates.map(p=>{
-   const key=i+':'+p.index,answer=a.candidateAnswers[key]||'';
-   return '<div class="identity-option"><img src="'+p.preview+'" alt="Kandidat '+p.index+'"><div><b>Kandidat #'+p.index+'</b><div class="identity-confirm-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn '+(answer==='yes'?'primary':'secondary')+'" data-candidate-answer="yes" data-capture="'+i+'" data-candidate="'+p.index+'">Ya, ini target</button><button type="button" class="btn '+(answer==='no'?'primary':'secondary')+'" data-candidate-answer="no" data-capture="'+i+'" data-candidate="'+p.index+'">Tidak</button></div><p class="hint">Jawaban: '+(answer==='yes'?'Ya':answer==='no'?'Tidak':'Belum dipilih')+'</p></div></div>';
-  }).join('')+'</div><p class="hint">Status capture: '+(readiness[i].oneYes?'Satu target dipilih.':readiness[i].yesCount>1?'Ada '+readiness[i].yesCount+' pilihan Ya — pilih satu saja.':'Belum ada satu target Ya.')+'</p></div>';
- }).join('')+
+ a.selections=allReady?a.results.map((r,i)=>r.candidates.filter(p=>a.candidateAnswers[i+':'+p.index]==='yes').map(p=>Number(p.index))):a.results.map(()=>null);
+ host.innerHTML='<h4 style="margin:12px 0 6px">Pilih semua kandidat yang merupakan target</h4><p class="hint">Dalam SATU capture, Bunda boleh memilih lebih dari satu kandidat Ya jika semuanya memang target yang ingin diganti. Pilih Tidak untuk orang yang bukan target. Setiap kandidat dijawab secara mandiri.</p>'+
+ a.results.map((r,i)=>'<div class="identity-capture"><b>Capture '+(i+1)+'</b><div class="identity-options">'+r.candidates.map(p=>{
+  const answer=a.candidateAnswers[i+':'+p.index]||'';
+  return '<div class="identity-option"><img src="'+p.preview+'" alt="Kandidat '+p.index+'"><div><b>Kandidat #'+p.index+'</b><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn '+(answer==='yes'?'primary':'secondary')+'" data-candidate-answer="yes" data-capture="'+i+'" data-candidate="'+p.index+'">Ya, ini target</button><button type="button" class="btn '+(answer==='no'?'primary':'secondary')+'" data-candidate-answer="no" data-capture="'+i+'" data-candidate="'+p.index+'">Tidak</button></div><p class="hint">Jawaban: '+(answer==='yes'?'Ya':answer==='no'?'Tidak':'Belum dipilih')+'</p></div></div>';
+ }).join('')+'</div><p class="hint">Status: '+(readiness[i].complete?(readiness[i].yesCount+' kandidat dipilih sebagai target.'):'Masih ada kandidat yang belum dijawab.')+'</p></div>').join('')+
  '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button type="button" class="btn primary" data-confirm-identity>Konfirmasi pilihan target</button><button type="button" class="btn secondary" data-reset-identity>Ulangi pilihan</button></div>'+
- '<p class="hint" id="identity-state-'+index+'">'+(a.identityVerified?'Pilihan target sudah dikonfirmasi. Bunda bisa klik Lanjut.':'Pilih satu kandidat Ya pada setiap capture, lalu tekan Konfirmasi pilihan target.')+'</p>';
+ '<p class="hint" id="identity-state-'+index+'">'+(a.identityVerified?'Pilihan target sudah dikonfirmasi. Bunda bisa klik Lanjut.':'Jawab Ya/Tidak untuk semua kandidat. Boleh lebih dari satu Ya pada setiap capture, lalu konfirmasi.')+'</p>';
  host.querySelectorAll('[data-candidate-answer]').forEach(btn=>btn.onclick=()=>{
-  const i=Number(btn.dataset.capture),candidate=Number(btn.dataset.candidate),answer=btn.dataset.candidateAnswer;
-  if(answer==='yes'){
-   a.results[i].candidates.forEach(p=>{a.candidateAnswers[i+':'+p.index]=Number(p.index)===candidate?'yes':'no'});
-  }else{
-   a.candidateAnswers[i+':'+candidate]='no';
-  }
-  a.identityVerified=false;
-  renderIdentityConfirmation(index);
+  const key=Number(btn.dataset.capture)+':'+Number(btn.dataset.candidate);
+  a.candidateAnswers[key]=btn.dataset.candidateAnswer;
+  a.identityVerified=false;renderIdentityConfirmation(index);
  });
  const confirm=host.querySelector('[data-confirm-identity]');
  if(confirm)confirm.onclick=()=>{
-  const ready=a.results.every((r,i)=>{
-   const answers=r.candidates.map(p=>a.candidateAnswers[i+':'+p.index]||'');
-   return answers.length>0&&answers.every(x=>x==='yes'||x==='no')&&answers.filter(x=>x==='yes').length===1;
-  });
-  if(!ready){a.identityVerified=false;const state=document.getElementById('identity-state-'+index);if(state)state.textContent='Belum bisa dikonfirmasi. Pilih satu kandidat Ya pada setiap capture.';return;}
-  a.selections=a.results.map((r,i)=>Number(r.candidates.find(p=>a.candidateAnswers[i+':'+p.index]==='yes').index));
-  a.identityVerified=true;
-  const state=document.getElementById('identity-state-'+index);if(state)state.textContent='Pilihan target berhasil dikonfirmasi. Sekarang Bunda bisa klik Lanjut.';
+  const ready=a.results.every((r,i)=>r.candidates.length>0&&r.candidates.every(p=>['yes','no'].includes(a.candidateAnswers[i+':'+p.index]))&&r.candidates.some(p=>a.candidateAnswers[i+':'+p.index]==='yes'));
+  if(!ready){a.identityVerified=false;const state=document.getElementById('identity-state-'+index);if(state)state.textContent='Belum bisa dikonfirmasi. Jawab semua kandidat dan pilih minimal satu Ya pada setiap capture.';return;}
+  a.selections=a.results.map((r,i)=>r.candidates.filter(p=>a.candidateAnswers[i+':'+p.index]==='yes').map(p=>Number(p.index)));
+  a.identityVerified=true;const state=document.getElementById('identity-state-'+index);if(state)state.textContent='Pilihan target berhasil dikonfirmasi. Sekarang Bunda bisa klik Lanjut.';
  };
  const reset=host.querySelector('[data-reset-identity]');
  if(reset)reset.onclick=()=>{a.candidateAnswers={};a.identityVerified=false;a.selections=a.results.map(()=>null);renderIdentityConfirmation(index);};
@@ -302,7 +289,10 @@ async function downloadTargetContactSheet(){
  const entries=[];
  S.targets.forEach((t,ti)=>{
   const a=t.analysis;if(!a||!a.identityVerified)return;
-  (a.selections||[]).forEach((n,i)=>{const r=a.results?.[i],p=r?.candidates?.find(x=>Number(x.index)===Number(n));if(p?.preview)entries.push({src:p.preview,label:"Target "+(ti+1)+" - Capture "+(i+1)+" - Kandidat #"+n});});
+  (a.selections||[]).forEach((selected,i)=>(Array.isArray(selected)?selected: selected==null?[]:[selected]).forEach(n=>{
+   const r=a.results?.[i],p=r?.candidates?.find(x=>Number(x.index)===Number(n));
+   if(p?.preview)entries.push({src:p.preview,label:"Target "+(ti+1)+" - Capture "+(i+1)+" - Kandidat #"+n});
+  }));
  });
  if(!entries.length){alert("Belum ada kandidat YA yang sudah dikonfirmasi.");return;}
  const cols=2,cellW=480,cellH=390,pad=28,headH=56,rows=Math.ceil(entries.length/cols);
@@ -311,16 +301,16 @@ async function downloadTargetContactSheet(){
  for(let i=0;i<entries.length;i++){const img=new Image();img.src=entries[i].src;await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject});const x=pad+(i%cols)*cellW,y=pad+Math.floor(i/cols)*(cellH+headH);ctx.fillStyle="#111827";ctx.font="bold 22px Arial";ctx.fillText(entries[i].label,x,y+30);const scale=Math.min((cellW-20)/img.width,cellH/img.height),w=img.width*scale,h=img.height*scale;ctx.drawImage(img,x+(cellW-w)/2,y+headH+(cellH-h)/2,w,h);}
  const link=document.createElement("a");link.download="target-confirmation-contact-sheet.jpg";link.href=canvas.toDataURL("image/jpeg",.92);link.click();
 }
-
 function makePrompt(){
  const targets=S.targets.map((t,i)=>{
   const a=t.analysis;
-  const verified=(a?.selections||[]).map((n,j)=>{
-   const r=a.results?.[j],p=r?.candidates?.find(x=>Number(x.index)===Number(n));
+  const verified=(a?.selections||[]).map((selected,j)=>{
+   const r=a.results?.[j],numbers=Array.isArray(selected)?selected:(selected==null?[]:[selected]);
+   const people=numbers.map(n=>{const p=r?.candidates?.find(x=>Number(x.index)===Number(n));return "kandidat #"+n+(Number.isFinite(p?.traitScore)? " (skor kecocokan deskripsi AI "+Math.round(p.traitScore*100)+"/100)": "");}).join(", ");
    const filename=t.captures?.[j]?.name||r?.name||("Capture "+(j+1));
-   return "Capture "+(j+1)+" ("+filename+"): kandidat #"+n+" dikonfirmasi YA oleh pengguna"+(Number.isFinite(p?.traitScore)?"; skor kecocokan deskripsi AI "+Math.round(p.traitScore*100)+"/100":"")+".";
+   return "Capture "+(j+1)+" ("+filename+"): "+people+" dikonfirmasi YA oleh pengguna.";
   }).join("\n");
-  return "TARGET "+(i+1)+": "+t.description+"\nPETA REFERENSI TERKONFIRMASI:\n"+verified+"\nSemua kandidat YA di atas menunjukkan orang target yang sama. Kandidat yang dijawab TIDAK bukan target dan harus tetap asli.";
+  return "TARGET "+(i+1)+": "+t.description+"\nPETA REFERENSI TERKONFIRMASI:\n"+verified+"\nSemua kandidat YA adalah orang yang memang ditandai pengguna sebagai target. Kandidat yang dijawab TIDAK harus tetap asli dan tidak boleh diganti.";
  }).join("\n\n");
  const isFaceOnly=S.outfit==="video"&&S.background==="original";
  const replaceMode=isFaceOnly?"GANTI WAJAH SAJA":"GANTI SELURUH KARAKTER";
@@ -401,7 +391,7 @@ Instruksi ini tidak menjamin aplikasi generator dapat memproses seluruh durasi a
 `;
 }
 function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
-function go(dir){if(dir>0){if(current===1){S.targetCount=Number(S.targetCount);initTargets();document.querySelectorAll("textarea[id^=td]").forEach((e,i)=>{if(S.targets[i])S.targets[i].description=e.value});for(let ti=0;ti<S.targets.length;ti++){const t=S.targets[ti],a=t.analysis;if(!a||!Array.isArray(a.results))continue;const answers=a.candidateAnswers||{};const selections=[];let problem="";for(let ci=0;ci<a.results.length;ci++){const candidates=a.results[ci].candidates||[];const yes=candidates.filter(p=>answers[ci+":"+p.index]==="yes");const unanswered=candidates.some(p=>answers[ci+":"+p.index]!=="yes"&&answers[ci+":"+p.index]!=="no");if(unanswered){problem="Capture "+(ci+1)+" pada Target "+(ti+1)+" masih memiliki kandidat yang belum dijawab.";break}if(yes.length!==1){problem="Capture "+(ci+1)+" pada Target "+(ti+1)+" harus memiliki tepat satu kandidat berwarna hijau/Ya.";break}selections.push(Number(yes[0].index))}if(problem){alert(problem+" Pilih Tidak untuk kandidat lain, lalu coba Lanjut lagi.");return}a.selections=selections;a.identityVerified=selections.length===a.results.length&&selections.length>0}}if(current===1&&S.targets.some(t=>!t.description.trim()||!t.captures||!t.captures.length)){alert("Setiap target wajib memiliki deskripsi dan minimal satu capture dari video sumber.");return}if(current===1&&S.targets.some(t=>!t.analysis||t.analysisStatus!=="done")){alert("Jalankan Analisis AI untuk setiap target terlebih dahulu.");return}if(current===1&&S.targets.some(t=>!t.analysis.identityVerified||!Array.isArray(t.analysis.selections)||t.analysis.selections.length!==t.analysis.results.length||t.analysis.selections.some(x=>x===null))){alert("Konfirmasi kandidat belum lengkap. Pastikan tepat satu kandidat Ya pada setiap capture.");return}if(current===2&&S.targets.some(t=>!t.photos.length||!t.fullbody)){alert("Setiap target wajib memiliki foto referensi dan konfirmasi foto full-body.");return}if(current===5&&S.sheet==="yes"&&S.sheetIssue&&!S.sheetRevisionUploaded){alert("Setelah memilih jenis kesalahan, generate ulang dengan prompt revisi dan unggah hasil Character Sheet yang baru.");return}if(current===5&&S.sheet==="yes"&&(!S.sheetFile||!S.sheetApproved)){alert("Unggah hasil Character Sheet dan setujui setelah diperiksa. Jika belum sesuai, pilih jenis kesalahan, ikuti prompt revisi, unggah hasil revisi, lalu setujui.");return}if(current===5&&S.sheet==="yes"&&S.sheetIssue==="outfit"&&!S.outfitCorrectionFiles.length){alert("Unggah foto outfit yang benar sebelum melanjutkan.");return}}current=Math.max(0,Math.min(8,current+dir));render()}
+function go(dir){if(dir>0){if(current===1){S.targetCount=Number(S.targetCount);initTargets();document.querySelectorAll("textarea[id^=td]").forEach((e,i)=>{if(S.targets[i])S.targets[i].description=e.value});for(let ti=0;ti<S.targets.length;ti++){const t=S.targets[ti],a=t.analysis;if(!a||!Array.isArray(a.results))continue;const answers=a.candidateAnswers||{},selections=[];let problem="";for(let ci=0;ci<a.results.length;ci++){const candidates=a.results[ci].candidates||[];const yes=candidates.filter(p=>answers[ci+":"+p.index]==="yes");const unanswered=candidates.some(p=>answers[ci+":"+p.index]!=="yes"&&answers[ci+":"+p.index]!=="no");if(unanswered){problem="Capture "+(ci+1)+" pada Target "+(ti+1)+" masih memiliki kandidat yang belum dijawab.";break}if(yes.length===0){problem="Capture "+(ci+1)+" pada Target "+(ti+1)+" belum memiliki kandidat Ya.";break}selections.push(yes.map(p=>Number(p.index)))}if(problem){alert(problem+" Pilih Ya untuk semua orang yang memang target, Tidak untuk yang bukan target, lalu konfirmasi.");return}a.selections=selections;a.identityVerified=selections.length===a.results.length&&selections.length>0}}if(current===1&&S.targets.some(t=>!t.description.trim()||!t.captures||!t.captures.length)){alert("Setiap target wajib memiliki deskripsi dan minimal satu capture dari video sumber.");return}if(current===1&&S.targets.some(t=>!t.analysis||t.analysisStatus!=="done")){alert("Jalankan Analisis AI untuk setiap target terlebih dahulu.");return}if(current===1&&S.targets.some(t=>!t.analysis.identityVerified||!Array.isArray(t.analysis.selections)||t.analysis.selections.length!==t.analysis.results.length||t.analysis.selections.some(x=>!Array.isArray(x)||x.length===0))){alert("Konfirmasi pilihan target belum lengkap. Pastikan semua kandidat dijawab dan minimal satu kandidat Ya pada setiap capture.");return}if(current===2&&S.targets.some(t=>!t.photos.length||!t.fullbody)){alert("Setiap target wajib memiliki foto referensi dan konfirmasi foto full-body.");return}if(current===5&&S.sheet==="yes"&&S.sheetIssue&&!S.sheetRevisionUploaded){alert("Setelah memilih jenis kesalahan, generate ulang dengan prompt revisi dan unggah hasil Character Sheet yang baru.");return}if(current===5&&S.sheet==="yes"&&(!S.sheetFile||!S.sheetApproved)){alert("Unggah hasil Character Sheet dan setujui setelah diperiksa. Jika belum sesuai, pilih jenis kesalahan, ikuti prompt revisi, unggah hasil revisi, lalu setujui.");return}if(current===5&&S.sheet==="yes"&&S.sheetIssue==="outfit"&&!S.outfitCorrectionFiles.length){alert("Unggah foto outfit yang benar sebelum melanjutkan.");return}}current=Math.max(0,Math.min(8,current+dir));render()}
 render();
 </script>
 </body></html>
