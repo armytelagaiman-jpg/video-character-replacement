@@ -288,8 +288,12 @@ return "REGENERATE / PERBAIKI CHARACTER SHEET — KESALAHAN UTAMA: OUTFIT SALAH.
 function makePrompt(){
  const targets=S.targets.map((t,i)=>{
   const a=t.analysis;
-  const picks=a?.results?.map((r,j)=>"Capture "+(j+1)+": kandidat #"+(r.candidates?.[0]?.index??"-")+(Number.isFinite(r.candidates?.[0]?.traitScore)?", kecocokan deskripsi "+Math.round(r.candidates[0].traitScore*100)+"/100":"")).join("; ")||"belum dianalisis";
-  return "TARGET "+(i+1)+": "+t.description+"\nCapture penanda target: "+(t.captures||[]).map(f=>f.name).join(", ")+".\nKandidat yang DIKONFIRMASI pengguna: "+(a?.selections||[]).map((n,j)=>"Capture "+(j+1)+" kandidat #"+n).join("; ")+".\nPengguna telah mengonfirmasi semua pilihan adalah orang yang sama.";
+  const verified=(a?.selections||[]).map((n,j)=>{
+   const r=a.results?.[j],p=r?.candidates?.find(x=>Number(x.index)===Number(n));
+   const filename=t.captures?.[j]?.name||r?.name||("Capture "+(j+1));
+   return "CAPTURE "+(j+1)+" ["+filename+"]: kandidat #"+n+" DIPILIH DAN DIJAWAB YA oleh pengguna"+(Number.isFinite(p?.traitScore)?"; skor kecocokan deskripsi AI "+Math.round(p.traitScore*100)+"/100":"")+".";
+  }).join("\n");
+  return "TARGET "+(i+1)+": "+t.description+"\nIDENTITAS TARGET YANG DISETUJUI PENGGUNA:\n"+verified+"\nSemua kandidat di atas adalah orang yang sama dan merupakan satu-satunya target penggantian untuk Target "+(i+1)+". Kandidat yang dijawab TIDAK bukan target dan wajib dibiarkan asli.";
  }).join("\n\n");
  const isFaceOnly=S.outfit==="video"&&S.background==="original";
  const replaceMode=isFaceOnly?"GANTI WAJAH SAJA":"GANTI SELURUH KARAKTER";
@@ -309,18 +313,20 @@ function makePrompt(){
  const sheet=S.sheet==="yes"&&S.sheetFile?"Character Sheet yang disetujui: "+S.sheetFile+".":S.existingSheetFile?"Character Sheet referensi: "+S.existingSheetFile+".":"Gunakan foto referensi karakter yang diunggah.";
  return `TUGAS: ${replaceMode} pada video sumber menggunakan karakter referensi.
 
-TARGET YANG HARUS DIGANTI
+TARGET PENGGANTIAN — HASIL PILIHAN PENGGUNA
 ${targets}
-Gunakan deskripsi dan semua capture sebagai petunjuk untuk menemukan ORANG YANG SAMA di seluruh video. Jangan mengunci target pada posisi, ukuran, pakaian, atau satu adegan saja. Target bisa berpindah tempat, berganti outfit, tertutup sesaat, atau muncul dengan sudut kamera berbeda. Jangan mengganti orang lain.
+PENTING: Daftar di atas berasal dari kandidat yang secara eksplisit dijawab YA oleh pengguna pada alat analisis. Gunakan capture yang disebutkan sebagai referensi visual target. Cocokkan orang yang dipilih pada setiap capture sebagai SATU identitas yang sama, walaupun posisi, ukuran, pakaian, sudut, atau pencahayaan berubah. Jangan memilih ulang berdasarkan tebakan posisi/tampilan. Jangan mengganti kandidat yang dijawab TIDAK atau orang lain di sekitarnya.
+SERTAKAN SEMUA FILE CAPTURE YANG TERCANTUM DI ATAS SAAT MENGIRIM PROMPT INI KE GENERATOR VIDEO. Nama file dan nomor kandidat adalah peta pilihan pengguna dari hasil analisis; prompt teks saja tidak mengirimkan piksel gambar.
 
 ATURAN CAKUPAN ADEGAN — WAJIB
-1. Periksa video dari awal sampai akhir dan identifikasi setiap shot/adegan tempat target muncul.
-2. Buat kesinambungan identitas target antar-shot berdasarkan ciri orang, bukan pakaian atau posisi.
-3. Terapkan penggantian pada SETIAP kemunculan target dan SETIAP frame selama ia terlihat, termasuk adegan singkat, berpindah tempat, close-up, wide shot, dan saat sebagian tubuh tertutup.
-4. Jangan melewatkan adegan. Jangan biarkan wajah/karakter asli muncul kembali pada shot berikutnya.
-5. Sebelum selesai, periksa ulang seluruh timeline per shot. Jika ada target yang belum terganti, perbaiki shot tersebut. Jangan mengubah karakter lain.
+1. Periksa video dari awal sampai akhir dan identifikasi setiap shot/adegan tempat identitas target terpilih muncul.
+2. Gunakan identitas target yang telah dipetakan pada capture terpilih sebagai acuan untuk melacak orang yang sama di semua shot.
+3. Terapkan penggantian pada SETIAP kemunculan target dan SETIAP frame selama ia terlihat, termasuk adegan singkat, perpindahan posisi, close-up, wide shot, dan saat sebagian tubuh tertutup.
+4. Jangan melewatkan adegan. Jangan biarkan karakter asli target muncul kembali pada shot berikutnya.
+5. Jangan mengubah orang yang dijawab TIDAK atau karakter lain. Jika target tidak terlihat pada suatu shot, jangan mengganti siapa pun.
+6. Sebelum selesai, periksa ulang seluruh timeline per shot. Perbaiki setiap shot yang target terpilihnya masih belum terganti.
 
-IDENTITAS & PENAMPILAN
+IDENTITAS & PENAMPILAN KARAKTER PENGGANTI
 ${identity}
 ${sheet}
 Kunci wajah dan identitas karakter pengganti agar konsisten pada semua sudut, ekspresi, gerakan, dan adegan. Jangan menciptakan wajah generik atau mencampur identitas.
@@ -335,12 +341,13 @@ TEKS & ELEMEN DIGITAL
 ${overlay}
 
 PEMERIKSAAN AKHIR
-Pastikan tidak ada target asli yang tertinggal pada adegan mana pun; tidak ada wajah ganda, karakter bercampur, flicker, ghosting, atau perubahan identitas. Pastikan semua karakter yang tidak dipilih tetap sama.
+Pastikan semua target yang dipilih YA telah terganti di setiap kemunculannya. Pastikan tidak ada target asli yang tertinggal, tidak ada wajah ganda, karakter bercampur, flicker, atau ghosting. Pastikan semua orang yang dijawab TIDAK tetap sama seperti video asli.
 
 NEGATIVE PROMPT
-Missed target, unchanged target in any shot, original target reappearing, incomplete replacement, identity drift, different face, generic face, duplicate person, mixed characters, flicker, ghosting, changed unselected characters, changed scene, changed camera, changed lighting, unintended outfit or background changes.
+Missed selected target, unchanged selected target in any shot, original selected target reappearing, incomplete replacement, replacing a person marked NO, changing unselected characters, identity drift, different replacement face, generic face, duplicate person, mixed characters, flicker, ghosting, changed scene, changed camera, changed lighting, unintended outfit or background changes.
 
-PENTING: Jika aplikasi video tidak mampu memproses seluruh durasi atau banyak referensi sekaligus, bagi video menjadi klip per adegan, gunakan referensi yang sama, lalu periksa setiap klip sebelum digabungkan. Prompt tidak dapat memaksa fitur yang tidak didukung aplikasi.\n`;
+PENTING: Jika aplikasi video tidak mampu memproses seluruh durasi atau banyak referensi sekaligus, bagi video menjadi klip per adegan. Sertakan capture yang sesuai pada setiap klip dan gunakan Character Sheet yang sama. Prompt tidak dapat memaksa fitur yang tidak didukung aplikasi.
+`;
 }
 function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function go(dir){if(dir>0){if(current===1){S.targetCount=Number(S.targetCount);initTargets();document.querySelectorAll("textarea[id^=td]").forEach((e,i)=>S.targets[i].description=e.value)}if(current===1&&S.targets.some(t=>!t.description.trim()||!t.captures||!t.captures.length)){alert("Setiap target wajib memiliki deskripsi dan minimal satu capture dari video sumber.");return}if(current===1&&S.targets.some(t=>!t.analysis||t.analysisStatus!=="done")){alert("Jalankan Analisis AI untuk setiap target terlebih dahulu.");return}if(current===1&&S.targets.some(t=>!t.analysis.identityVerified||!Array.isArray(t.analysis.selections)||t.analysis.selections.some(x=>x===null))){alert("Jawab Ya atau Tidak untuk setiap kandidat. Pilih tepat satu kandidat Ya pada setiap capture, lalu konfirmasi.");return}if(current===2&&S.targets.some(t=>!t.photos.length||!t.fullbody)){alert("Setiap target wajib memiliki foto referensi dan konfirmasi foto full-body.");return}if(current===5&&S.sheet==="yes"&&S.sheetIssue&&!S.sheetRevisionUploaded){alert("Setelah memilih jenis kesalahan, generate ulang dengan prompt revisi dan unggah hasil Character Sheet yang baru.");return}if(current===5&&S.sheet==="yes"&&(!S.sheetFile||!S.sheetApproved)){alert("Unggah hasil Character Sheet dan setujui setelah diperiksa. Jika belum sesuai, pilih jenis kesalahan, ikuti prompt revisi, unggah hasil revisi, lalu setujui.");return}if(current===5&&S.sheet==="yes"&&S.sheetIssue==="outfit"&&!S.outfitCorrectionFiles.length){alert("Unggah foto outfit yang benar sebelum melanjutkan.");return}}current=Math.max(0,Math.min(8,current+dir));render()}
