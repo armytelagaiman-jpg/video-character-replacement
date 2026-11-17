@@ -12,7 +12,7 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="brand"><div class="logo">V</div><div><b>VIDEO CHARACTER REPLACEMENT</b><small>Prompt Architect · Local AI Detection Preview v1.1</small></div></div>
+  <div class="brand"><div class="logo">V</div><div><b>VIDEO CHARACTER REPLACEMENT</b><small>Prompt Architect · Local AI Detection Preview v1.2 · build 20261117b</small></div></div>
   <h1>Bangun prompt penggantian karakter video.</h1>
   <p class="intro">Ikuti langkah demi langkah. Capture target dapat diperiksa dengan model AI lokal untuk mendeteksi orang, lalu hasil pemeriksaan dimasukkan ke prompt. Fitur ini masih tahap awal dan belum memverifikasi identitas orang yang sama.</p>
   <div class="progress" id="progress"></div><div class="steptext" id="steptext"></div>
@@ -35,7 +35,7 @@ let detectorPromise=null;
 async function getPersonDetector(){
  if(!detectorPromise){
   detectorPromise=(async()=>{
-   const lib=await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1");
+   const lib=await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1?build=20261117b");
    lib.env.allowRemoteModels=true;lib.env.allowLocalModels=false;lib.env.useBrowserCache=true;
    if(lib.env.backends?.onnx?.wasm)lib.env.backends.onnx.wasm.numThreads=1;
    return await lib.pipeline("object-detection","Xenova/yolos-tiny",{device:"wasm",dtype:"q4"});
@@ -47,7 +47,7 @@ let visualFeaturePromise=null;
 async function getVisualFeatureExtractor(){
  if(!visualFeaturePromise){
   visualFeaturePromise=(async()=>{
-   const lib=await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1");
+   const lib=await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1?build=20261117b");
    lib.env.allowRemoteModels=true;lib.env.allowLocalModels=false;lib.env.useBrowserCache=true;
    if(lib.env.backends?.onnx?.wasm)lib.env.backends.onnx.wasm.numThreads=1;
    return await lib.pipeline("image-feature-extraction","Xenova/clip-vit-base-patch32",{device:"wasm"});
@@ -60,7 +60,7 @@ let attributeClassifierPromise=null;
 async function getAttributeClassifier(){
  if(!attributeClassifierPromise){
   attributeClassifierPromise=(async()=>{
-   const lib=await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1");
+   const lib=await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1?build=20261117b");
    lib.env.allowRemoteModels=true;lib.env.allowLocalModels=false;lib.env.useBrowserCache=true;
    if(lib.env.backends?.onnx?.wasm)lib.env.backends.onnx.wasm.numThreads=1;
    return await lib.pipeline("zero-shot-image-classification","Xenova/clip-vit-base-patch32",{device:"wasm"});
@@ -111,11 +111,11 @@ async function analyzeTargetCaptures(index){
  if(!target||!target.captures?.length){out.textContent="Unggah minimal satu capture terlebih dahulu.";return}
  const descriptionAtStart=target.description.trim(),filesAtStart=[...target.captures];
  button.disabled=true;button.textContent="Memuat AI dan menganalisis…";out.className="ai-status";out.textContent="Memuat detektor orang dan model pencocok ciri fisik. Pengunduhan pertama memerlukan internet.";
- target.analysisStatus="running";
+ target.analysisStatus="running";out.dataset.stage="memuat model";
  try{
-  const detector=await getPersonDetector(),extractor=await getVisualFeatureExtractor();
+  out.dataset.stage="memuat detektor orang";const detector=await getPersonDetector();out.dataset.stage="memuat pembanding visual";const extractor=await getVisualFeatureExtractor();
   const traits=makePhysicalTraitLabels(descriptionAtStart);
-  const classifier=traits.length?await getAttributeClassifier():null;
+  out.dataset.stage="memuat pencocok ciri fisik";const classifier=traits.length?await getAttributeClassifier():null;
   const results=[];
   for(let n=0;n<filesAtStart.length;n++){
    if(S.targets[index]!==target||target.captures.length!==filesAtStart.length||target.captures.some((f,j)=>f!==filesAtStart[j]))throw new Error("Daftar capture berubah saat analisis berjalan. Jalankan ulang analisis.");
@@ -123,17 +123,17 @@ async function analyzeTargetCaptures(index){
    const url=URL.createObjectURL(filesAtStart[n]);
    try{
     const img=new Image();img.src=url;await img.decode();
-    const detections=await detector(url,{threshold:.12});
+    out.dataset.stage="mendeteksi orang pada capture "+(n+1);const detections=await detector(url,{threshold:.12});
     const ranked=rankTargetCandidates(detections.filter(d=>String(d.label).toLowerCase()==="person"),img.naturalWidth,img.naturalHeight);
     const candidates=[];
     for(const candidate of ranked.slice(0,3)){
      const crop=cropPersonDataUrl(img,candidate.box);
-     const tensor=await extractor(crop);
+     out.dataset.stage="menghitung fitur visual";const tensor=await extractor(crop);
      let traitScore=null,traitDetails=[];
      if(classifier&&traits.length){
       let total=0;
       for(const trait of traits){
-       const judged=await classifier(crop,[trait.yes,trait.no]);
+       out.dataset.stage="mencocokkan ciri fisik: "+trait.name;const judged=await classifier(crop,[trait.yes,trait.no]);
        if(!Array.isArray(judged))throw new Error("Format hasil model pencocok ciri fisik tidak sesuai.");
        const positive=judged.find(x=>x&&x.label===trait.yes);
        const score=positive&&Number.isFinite(positive.score)?positive.score:0;
@@ -158,7 +158,7 @@ async function analyzeTargetCaptures(index){
   const summary="DESKRIPSI TARGET: "+(descriptionAtStart||"belum diisi")+"."+nl+traitNote+nl+lines.join(nl)+nl+"PERBANDINGAN TAMPILAN KANDIDAT UTAMA"+nl+(pairLines.join(nl)||"Belum ada pasangan capture untuk dibandingkan.")+nl+"CATATAN: Pemeringkatan menggabungkan kecocokan visual ciri fisik yang dikenali model CLIP dengan posisi/ukuran. Skor kecocokan bukan probabilitas identitas dan model dapat keliru, terutama jika wajah kecil, tertutup, buram, atau terlihat dari samping. Perbandingan CLIP antarcapture juga hanya kemiripan tampilan, bukan verifikasi bahwa orangnya sama. Konfirmasi kandidat secara visual.";
   target.analysis={model:"YOLOS-Tiny + CLIP zero-shot physical-trait matching + image features",results:results.map(r=>({...r,candidates:r.candidates.map(c=>({...c,embedding:undefined}))})),comparisons,summary,description:descriptionAtStart,identityVerified:false,createdAt:new Date().toISOString()};
   target.analysisStatus="done";out.className="ai-status ok";out.textContent=summary;
- }catch(err){target.analysisStatus="error";target.analysis=null;out.className="ai-status err";out.textContent="Analisis gagal pada model AI: "+(err?.message||String(err))+(err?.stack?"\\nDetail teknis: "+String(err.stack).split("\\n").slice(0,3).join(" | "):"")+". Versi model diperbarui; jika gagal lagi, detail ini membantu melacak tahap yang bermasalah."}
+ }catch(err){target.analysisStatus="error";target.analysis=null;out.className="ai-status err";out.textContent="Analisis gagal: "+(err?.message||String(err))+" | Tahap: "+(out.dataset.stage||"tidak diketahui")+" | Detail: "+String(err?.stack||"stack tidak tersedia").split("\n").slice(0,3).join(" | ")}
  finally{button.disabled=false;button.textContent="Ulangi analisis "+(index+1)}
 }
 function render(){
