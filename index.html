@@ -160,24 +160,44 @@ function renderIdentityConfirmation(index){
  if(!a.candidateAnswers)a.candidateAnswers={};
  const readiness=a.results.map((r,i)=>{
   const answers=r.candidates.map(p=>a.candidateAnswers[i+':'+p.index]||'');
-  return {complete:answers.length>0&&answers.every(x=>x==='yes'||x==='no'),oneYes:answers.filter(x=>x==='yes').length===1};
+  const yesCount=answers.filter(x=>x==='yes').length;
+  return {complete:answers.length>0&&answers.every(x=>x==='yes'||x==='no'),oneYes:yesCount===1,yesCount};
  });
  const allReady=readiness.length>0&&readiness.every(x=>x.complete&&x.oneYes);
  a.identityVerified=allReady;
  a.selections=allReady?a.results.map((r,i)=>Number(r.candidates.find(p=>a.candidateAnswers[i+':'+p.index]==='yes').index)):a.results.map(()=>null);
- host.innerHTML='<h4 style="margin:12px 0 6px">Periksa setiap kandidat</h4><p class="hint">Pilih “Ya, ini target” untuk tepat satu kandidat di setiap capture. Pilih “Tidak” untuk semua kandidat lainnya. Setelah semua jawaban lengkap dan tepat satu Ya per capture, tombol Lanjut bisa digunakan otomatis.</p>'+
+ host.innerHTML='<h4 style="margin:12px 0 6px">Periksa setiap kandidat</h4><p class="hint">Pada setiap capture, pilih satu orang yang menjadi target dengan tombol Ya. Saat Bunda memilih Ya, kandidat lain di capture yang sama otomatis menjadi Tidak. Jadi cukup satu Ya untuk setiap capture.</p>'+
  a.results.map((r,i)=>{
-  return '<div class="identity-capture"><b>Capture '+(i+1)+'</b><div class="identity-options">'+r.candidates.map((p)=>{
+  return '<div class="identity-capture"><b>Capture '+(i+1)+'</b><div class="identity-options">'+r.candidates.map(p=>{
    const key=i+':'+p.index,answer=a.candidateAnswers[key]||'';
-   return '<div class="identity-option"><img src="'+p.preview+'" alt="Kandidat '+p.index+'"><div><b>Kandidat #'+p.index+'</b><div class="identity-confirm-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn '+(answer==='yes'?'primary':'secondary')+'" data-candidate-answer="yes" data-capture="'+i+'" data-candidate="'+p.index+'">Ya, ini target</button><button type="button" class="btn '+(answer==='no'?'primary':'secondary')+'" data-candidate-answer="no" data-capture="'+i+'" data-candidate="'+p.index+'">Tidak</button></div><p class="hint">Jawaban: '+(answer==='yes'?'Ya':answer==='no'?'Tidak':'Belum dijawab')+'</p></div></div>';
-  }).join('')+'</div><p class="hint">Status capture: '+(readiness[i].complete?(readiness[i].oneYes?'Lengkap — satu kandidat Ya.':'Perlu tepat satu kandidat Ya.'):'Masih ada kandidat yang belum dijawab.')+'</p></div>';
+   return '<div class="identity-option"><img src="'+p.preview+'" alt="Kandidat '+p.index+'"><div><b>Kandidat #'+p.index+'</b><div class="identity-confirm-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn '+(answer==='yes'?'primary':'secondary')+'" data-candidate-answer="yes" data-capture="'+i+'" data-candidate="'+p.index+'">Ya, ini target</button><button type="button" class="btn '+(answer==='no'?'primary':'secondary')+'" data-candidate-answer="no" data-capture="'+i+'" data-candidate="'+p.index+'">Tidak</button></div><p class="hint">Jawaban: '+(answer==='yes'?'Ya':answer==='no'?'Tidak':'Belum dipilih')+'</p></div></div>';
+  }).join('')+'</div><p class="hint">Status capture: '+(readiness[i].oneYes?'Satu target dipilih.':readiness[i].yesCount>1?'Ada '+readiness[i].yesCount+' pilihan Ya — pilih satu saja.':'Belum ada satu target Ya.')+'</p></div>';
  }).join('')+
- '<p class="hint" id="identity-state-'+index+'">'+(allReady?'Semua jawaban lengkap dan benar. Bunda bisa langsung klik Lanjut.':'Belum siap lanjut. Pastikan semua kandidat dijawab dan tepat satu kandidat Ya pada setiap capture.')+'</p>';
+ '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button type="button" class="btn primary" data-confirm-identity>Konfirmasi pilihan target</button><button type="button" class="btn secondary" data-reset-identity>Ulangi pilihan</button></div>'+
+ '<p class="hint" id="identity-state-'+index+'">'+(a.identityVerified?'Pilihan target sudah dikonfirmasi. Bunda bisa klik Lanjut.':'Pilih satu kandidat Ya pada setiap capture, lalu tekan Konfirmasi pilihan target.')+'</p>';
  host.querySelectorAll('[data-candidate-answer]').forEach(btn=>btn.onclick=()=>{
   const i=Number(btn.dataset.capture),candidate=Number(btn.dataset.candidate),answer=btn.dataset.candidateAnswer;
-  a.candidateAnswers[i+':'+candidate]=answer;
+  if(answer==='yes'){
+   a.results[i].candidates.forEach(p=>{a.candidateAnswers[i+':'+p.index]=Number(p.index)===candidate?'yes':'no'});
+  }else{
+   a.candidateAnswers[i+':'+candidate]='no';
+  }
+  a.identityVerified=false;
   renderIdentityConfirmation(index);
  });
+ const confirm=host.querySelector('[data-confirm-identity]');
+ if(confirm)confirm.onclick=()=>{
+  const ready=a.results.every((r,i)=>{
+   const answers=r.candidates.map(p=>a.candidateAnswers[i+':'+p.index]||'');
+   return answers.length>0&&answers.every(x=>x==='yes'||x==='no')&&answers.filter(x=>x==='yes').length===1;
+  });
+  if(!ready){a.identityVerified=false;const state=document.getElementById('identity-state-'+index);if(state)state.textContent='Belum bisa dikonfirmasi. Pilih satu kandidat Ya pada setiap capture.';return;}
+  a.selections=a.results.map((r,i)=>Number(r.candidates.find(p=>a.candidateAnswers[i+':'+p.index]==='yes').index));
+  a.identityVerified=true;
+  const state=document.getElementById('identity-state-'+index);if(state)state.textContent='Pilihan target berhasil dikonfirmasi. Sekarang Bunda bisa klik Lanjut.';
+ };
+ const reset=host.querySelector('[data-reset-identity]');
+ if(reset)reset.onclick=()=>{a.candidateAnswers={};a.identityVerified=false;a.selections=a.results.map(()=>null);renderIdentityConfirmation(index);};
 }
 function render(){
  drawProgress();
