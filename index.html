@@ -133,9 +133,10 @@ async function analyzeTargetCaptures(index){
      if(classifier&&traits.length){
       let total=0;
       for(const trait of traits){
-       const judged=await classifier(crop,{candidate_labels:[trait.yes,trait.no]});
-       const positive=judged.find(x=>x.label===trait.yes);
-       const score=positive?positive.score:0;
+       const judged=await classifier(crop,[trait.yes,trait.no]);
+       if(!Array.isArray(judged))throw new Error("Format hasil model pencocok ciri fisik tidak sesuai.");
+       const positive=judged.find(x=>x&&x.label===trait.yes);
+       const score=positive&&Number.isFinite(positive.score)?positive.score:0;
        total+=score;traitDetails.push({name:trait.name,score});
       }
       traitScore=total/traits.length;
