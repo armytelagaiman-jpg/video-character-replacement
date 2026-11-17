@@ -12,12 +12,12 @@
 </head>
 <body>
 <div class="wrap">
-  <div class="brand"><div class="logo">V</div><div><b>VIDEO CHARACTER REPLACEMENT</b><small>Prompt Architect · Interactive Prototype v0.9</small></div></div>
+  <div class="brand"><div class="logo">V</div><div><b>VIDEO CHARACTER REPLACEMENT</b><small>Prompt Architect · Local AI Detection Preview v1.1</small></div></div>
   <h1>Bangun prompt penggantian karakter video.</h1>
-  <p class="intro">Ikuti langkah demi langkah. Pilihanmu akan dirangkum menjadi prompt siap salin. Prototipe ini hanya mengatur konfigurasi dan menyusun prompt — bukan mengedit atau menghasilkan video/gambar.</p>
+  <p class="intro">Ikuti langkah demi langkah. Capture target dapat diperiksa dengan model AI lokal untuk mendeteksi orang, lalu hasil pemeriksaan dimasukkan ke prompt. Fitur ini masih tahap awal dan belum memverifikasi identitas orang yang sama.</p>
   <div class="progress" id="progress"></div><div class="steptext" id="steptext"></div>
   <section class="card" id="stage"></section>
-  <p class="footer">Prototype lokal tanpa OpenAI API Key. File yang dipilih hanya digunakan untuk preview di browser ini; belum diunggah ke server.</p>
+  <p class="footer">Tanpa OpenAI API Key. Model AI diunduh dari Hugging Face saat pertama kali digunakan; gambar capture diproses di browser dan tidak dikirim ke server aplikasi.</p>
 </div>
 <script>
 const steps=["Video","Target","Referensi","Outfit & Latar","Gaya Visual","Character Sheet","Tulisan & Ikon","Review","Prompt"];
@@ -57,7 +57,7 @@ async function analyzeTargetCaptures(index){
    finally{URL.revokeObjectURL(url)}
   }
   const total=results.reduce((a,r)=>a+r.people.length,0),nl=String.fromCharCode(10);
-  const lines=results.map((r,i)=>"Capture "+(i+1)+" ("+r.name+"): "+r.people.length+" orang terdeteksi"+(r.people.length?" — keyakinan deteksi "+r.people.map(p=>Math.round(p.score*100)+"%").join(", "):""));
+  const lines=results.map((r,i)=>"Capture "+(i+1)+" ("+r.name+"): "+r.people.length+" orang terdeteksi"+(r.people.length?" — "+r.people.map(p=>"keyakinan "+Math.round(p.score*100)+"%, kotak x:"+Math.round(p.box.xmin)+", y:"+Math.round(p.box.ymin)+", kanan:"+Math.round(p.box.xmax)+", bawah:"+Math.round(p.box.ymax)).join("; "):""));
   const summary="Selesai memeriksa "+results.length+" capture. Total deteksi orang: "+total+"."+nl+lines.join(nl)+nl+"Catatan: deteksi orang bukan verifikasi identitas; model ini belum membuktikan bahwa semua gambar menampilkan orang yang sama.";
   target.analysis={model:"Xenova/yolos-tiny",results,summary,createdAt:new Date().toISOString()};target.analysisStatus="done";out.className="ai-status ok";out.textContent=summary;
  }catch(err){target.analysisStatus="error";target.analysis=null;out.className="ai-status err";out.textContent="Analisis gagal: "+(err?.message||String(err))+". Periksa koneksi internet, lalu coba lagi. Prompt tidak akan menganggap gambar sudah dianalisis."}
@@ -269,7 +269,7 @@ No identity drift, no face distortion, no unintended outfit transfer, no clothin
 Hasil akhir harus mengikuti pilihan pengguna dan video sumber. Kemampuan aktual bergantung pada aplikasi video eksternal.`;
 }
 function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
-function go(dir){if(dir>0){if(current===1){S.targetCount=Number(S.targetCount);initTargets();document.querySelectorAll("textarea[id^=td]").forEach((e,i)=>S.targets[i].description=e.value)}if(current===1&&S.targets.some(t=>!t.description.trim()||!t.captures||!t.captures.length)){alert("Setiap target wajib memiliki deskripsi dan minimal satu capture dari video sumber.");return}if(current===2&&S.targets.some(t=>!t.photos.length||!t.fullbody)){alert("Setiap target wajib memiliki foto referensi dan konfirmasi foto full-body.");return}if(current===5&&S.sheet==="yes"&&S.sheetIssue&&!S.sheetRevisionUploaded){alert("Setelah memilih jenis kesalahan, generate ulang dengan prompt revisi dan unggah hasil Character Sheet yang baru.");return}if(current===5&&S.sheet==="yes"&&(!S.sheetFile||!S.sheetApproved)){alert("Unggah hasil Character Sheet dan setujui setelah diperiksa. Jika belum sesuai, pilih jenis kesalahan, ikuti prompt revisi, unggah hasil revisi, lalu setujui.");return}if(current===5&&S.sheet==="yes"&&S.sheetIssue==="outfit"&&!S.outfitCorrectionFiles.length){alert("Unggah foto outfit yang benar sebelum melanjutkan.");return}}current=Math.max(0,Math.min(8,current+dir));render()}
+function go(dir){if(dir>0){if(current===1){S.targetCount=Number(S.targetCount);initTargets();document.querySelectorAll("textarea[id^=td]").forEach((e,i)=>S.targets[i].description=e.value)}if(current===1&&S.targets.some(t=>!t.description.trim()||!t.captures||!t.captures.length)){alert("Setiap target wajib memiliki deskripsi dan minimal satu capture dari video sumber.");return}if(current===1&&S.targets.some(t=>!t.analysis||t.analysisStatus!=="done")){alert("Jalankan Analisis AI untuk setiap target terlebih dahulu. Prompt final harus menggunakan hasil pemeriksaan capture yang benar-benar berhasil.");return}if(current===2&&S.targets.some(t=>!t.photos.length||!t.fullbody)){alert("Setiap target wajib memiliki foto referensi dan konfirmasi foto full-body.");return}if(current===5&&S.sheet==="yes"&&S.sheetIssue&&!S.sheetRevisionUploaded){alert("Setelah memilih jenis kesalahan, generate ulang dengan prompt revisi dan unggah hasil Character Sheet yang baru.");return}if(current===5&&S.sheet==="yes"&&(!S.sheetFile||!S.sheetApproved)){alert("Unggah hasil Character Sheet dan setujui setelah diperiksa. Jika belum sesuai, pilih jenis kesalahan, ikuti prompt revisi, unggah hasil revisi, lalu setujui.");return}if(current===5&&S.sheet==="yes"&&S.sheetIssue==="outfit"&&!S.outfitCorrectionFiles.length){alert("Unggah foto outfit yang benar sebelum melanjutkan.");return}}current=Math.max(0,Math.min(8,current+dir));render()}
 render();
 </script>
 </body></html>
