@@ -314,62 +314,78 @@ function makePrompt(){
   const verified=(a?.selections||[]).map((n,j)=>{
    const r=a.results?.[j],p=r?.candidates?.find(x=>Number(x.index)===Number(n));
    const filename=t.captures?.[j]?.name||r?.name||("Capture "+(j+1));
-   return "CAPTURE "+(j+1)+" ["+filename+"]: kandidat #"+n+" DIPILIH DAN DIJAWAB YA oleh pengguna"+(Number.isFinite(p?.traitScore)?"; skor kecocokan deskripsi AI "+Math.round(p.traitScore*100)+"/100":"")+".";
+   return "Capture "+(j+1)+" ("+filename+"): kandidat #"+n+" dikonfirmasi YA oleh pengguna"+(Number.isFinite(p?.traitScore)?"; skor kecocokan deskripsi AI "+Math.round(p.traitScore*100)+"/100":"")+".";
   }).join("\n");
-  return "TARGET "+(i+1)+": "+t.description+"\nIDENTITAS TARGET YANG DISETUJUI PENGGUNA:\n"+verified+"\nSemua kandidat di atas adalah orang yang sama dan merupakan satu-satunya target penggantian untuk Target "+(i+1)+". Kandidat yang dijawab TIDAK bukan target dan wajib dibiarkan asli.";
+  return "TARGET "+(i+1)+": "+t.description+"\nPETA REFERENSI TERKONFIRMASI:\n"+verified+"\nSemua kandidat YA di atas menunjukkan orang target yang sama. Kandidat yang dijawab TIDAK bukan target dan harus tetap asli.";
  }).join("\n\n");
  const isFaceOnly=S.outfit==="video"&&S.background==="original";
  const replaceMode=isFaceOnly?"GANTI WAJAH SAJA":"GANTI SELURUH KARAKTER";
  const identity=isFaceOnly
-  ?"Gunakan foto referensi sebagai identitas wajah saja. Pertahankan rambut, kepala, tubuh, dan outfit asli video."
-  :"Gunakan foto referensi/Character Sheet sebagai identitas karakter pengganti. Ikuti pilihan outfit dan background pengguna.";
+  ?"Ganti hanya wajah target dengan wajah dari foto referensi. Pertahankan rambut, kepala, tubuh, pakaian, dan aksesori asli video."
+  :"Ganti seluruh penampilan orang target dengan karakter pada foto referensi/Character Sheet. Pertahankan gerakan dan pose sumber.";
  const outfit=S.outfit==="video"
-  ?"OUTFIT: pertahankan outfit asli video pada setiap adegan; ikuti perubahan pakaian yang memang terjadi di video."
-  :"OUTFIT: gunakan outfit referensi secara konsisten dari kepala sampai kaki. Jangan mengambil outfit target asli.";
+  ?"OUTFIT: pertahankan pakaian asli target dalam setiap adegan, termasuk perubahan pakaian yang memang terjadi di video."
+  :"OUTFIT: gunakan pakaian dari referensi karakter secara konsisten pada semua adegan.";
  const background=S.background==="original"
   ?"BACKGROUND: pertahankan lokasi, latar, properti, dan komposisi asli video."
-  :"BACKGROUND: gunakan background dari referensi sesuai pilihan pengguna.";
+  :"BACKGROUND: gunakan background referensi sesuai pilihan pengguna.";
  const style=S.style==="realistic"?"Realistic Human":S.style==="3d"?"3D Animation":S.style==="manhwa"?"Premium Semi-Realistic Korean Manhwa":"Natural";
  const overlay=S.overlay==="preserve"
   ?"Pertahankan semua teks, subtitle, logo, watermark, ikon, dan elemen grafis asli tanpa perubahan."
-  :"Hapus hanya elemen yang dipilih pengguna: "+S.removeItems.join(", ")+(S.overlayNotes?". Tambahan: "+S.overlayNotes:"")+". Bersihkan seluruh kemunculannya tanpa merusak area lain.";
+  :"Hapus hanya elemen yang dipilih pengguna: "+S.removeItems.join(", ")+(S.overlayNotes?". Tambahan: "+S.overlayNotes:"")+". Jangan mengubah elemen lain.";
  const sheet=S.sheet==="yes"&&S.sheetFile?"Character Sheet yang disetujui: "+S.sheetFile+".":S.existingSheetFile?"Character Sheet referensi: "+S.existingSheetFile+".":"Gunakan foto referensi karakter yang diunggah.";
- return `TUGAS: ${replaceMode} pada video sumber menggunakan karakter referensi.
+ return `TUGAS UTAMA: ${replaceMode} pada video sumber. Ganti hanya orang yang ditandai sebagai target di bawah dengan karakter referensi yang diunggah.
 
-TARGET PENGGANTIAN — HASIL PILIHAN PENGGUNA
+PETA TARGET TERKONFIRMASI
 ${targets}
-PENTING: Daftar di atas berasal dari kandidat yang secara eksplisit dijawab YA oleh pengguna pada alat analisis. Gunakan capture yang disebutkan sebagai referensi visual target. Cocokkan orang yang dipilih pada setiap capture sebagai SATU identitas yang sama, walaupun posisi, ukuran, pakaian, sudut, atau pencahayaan berubah. Jangan memilih ulang berdasarkan tebakan posisi/tampilan. Jangan mengganti kandidat yang dijawab TIDAK atau orang lain di sekitarnya.
-Lampirkan SATU lembar gabungan referensi target yang diunduh dari tools ini, bukan semua capture satu per satu. Lembar tersebut berisi potongan kandidat yang dijawab YA. Jika generator tidak mendukung contact sheet, gunakan satu capture target yang paling jelas sebagai referensi tambahan. Prompt teks tidak mengirimkan piksel gambar secara otomatis.
 
-ATURAN CAKUPAN ADEGAN — WAJIB
-1. Periksa video dari awal sampai akhir dan identifikasi setiap shot/adegan tempat identitas target terpilih muncul.
-2. Gunakan identitas target yang telah dipetakan pada capture terpilih sebagai acuan untuk melacak orang yang sama di semua shot.
-3. Terapkan penggantian pada SETIAP kemunculan target dan SETIAP frame selama ia terlihat, termasuk adegan singkat, perpindahan posisi, close-up, wide shot, dan saat sebagian tubuh tertutup.
-4. Jangan melewatkan adegan. Jangan biarkan karakter asli target muncul kembali pada shot berikutnya.
-5. Jangan mengubah orang yang dijawab TIDAK atau karakter lain. Jika target tidak terlihat pada suatu shot, jangan mengganti siapa pun.
-6. Sebelum selesai, periksa ulang seluruh timeline per shot. Perbaiki setiap shot yang target terpilihnya masih belum terganti.
+REFERENSI YANG DIUNGGAH
+1. Video sumber: acuan urutan adegan, gerakan, ekspresi, kamera, timing, dan tampilan asli.
+2. Satu lembar gabungan target: berisi potongan orang yang sudah dipilih YA oleh pengguna. Gunakan untuk mengenali target yang sama pada video, bukan sebagai karakter pengganti.
+3. Foto/Character Sheet karakter pengganti: satu-satunya acuan identitas karakter baru.
+Jangan tertukar antara lembar target dan foto karakter pengganti. Jangan meminta pengguna mengunggah semua capture satu per satu jika lembar gabungan sudah tersedia.
 
-IDENTITAS & PENAMPILAN KARAKTER PENGGANTI
+ATURAN IDENTIFIKASI TARGET
+- Cocokkan orang berdasarkan ciri fisik dan wajah yang terlihat, bukan hanya pakaian, lokasi, ukuran, atau posisi di tengah.
+- Gunakan seluruh potongan target yang dikonfirmasi untuk memahami bahwa orang yang sama dapat tampil dengan outfit, pose, sudut, jarak kamera, ekspresi, dan pencahayaan berbeda.
+- Lacak identitas target secara konsisten dari satu shot ke shot berikutnya, termasuk saat berpindah posisi atau muncul kembali setelah tidak terlihat.
+- Ganti hanya target yang dipetakan. Jangan mengganti orang di sebelahnya, orang yang mirip, atau kandidat yang dijawab TIDAK.
+- Jika identitas pada suatu shot benar-benar tidak dapat dipastikan, jangan menebak dan jangan mengganti orang lain.
+
+CAKUPAN PENGGANTIAN — PERIKSA SELURUH VIDEO
+1. Telusuri video dari awal sampai akhir, shot demi shot.
+2. Catat setiap shot yang menampilkan target, termasuk kemunculan singkat, close-up, wide shot, latar ramai, dan bagian tubuh yang tertutup sebagian.
+3. Terapkan penggantian pada setiap kemunculan target dan sepanjang frame ketika target terlihat.
+4. Pastikan target asli tidak muncul kembali pada shot berikutnya setelah sempat terganti.
+5. Jangan mengubah karakter lain, objek, atau bagian adegan yang tidak diminta.
+6. Lakukan pemeriksaan akhir per shot. Jika masih ada target asli yang tertinggal, perbaiki shot itu sebelum hasil dianggap selesai.
+
+IDENTITAS KARAKTER PENGGANTI
 ${identity}
 ${sheet}
-Kunci wajah dan identitas karakter pengganti agar konsisten pada semua sudut, ekspresi, gerakan, dan adegan. Jangan menciptakan wajah generik atau mencampur identitas.
+Pertahankan wajah dan identitas karakter pengganti tetap sama pada semua shot, sudut kamera, ekspresi, dan gerakan. Jangan membuat wajah generik, menggabungkan dua identitas, atau mengubah ciri wajah antar-shot.
 ${outfit}
 ${background}
 GAYA VISUAL: ${style}.
 
-GERAKAN & PELESTARIAN VIDEO
-Pertahankan gerakan, pose, ekspresi, arah pandang, gestur, timing, dan sinkronisasi bibir target sesuai video sumber. Pertahankan karakter lain, objek, kamera, framing, pencahayaan, bayangan, refleksi, filter, efek, warna, durasi, dan suasana asli. Integrasikan karakter pengganti secara natural ke setiap frame.
+GERAKAN DAN KONTINUITAS
+Ikuti gerakan tubuh, pose, ekspresi, arah pandang, gestur, timing, dan sinkronisasi bibir dari target asli. Pertahankan gerakan kamera, framing, perspektif, durasi, kecepatan, pencahayaan, bayangan, refleksi, filter, efek, warna, dan suasana video sumber. Hasil penggantian harus menyatu secara natural dengan tiap frame tanpa mengubah koreografi atau adegan.
 
-TEKS & ELEMEN DIGITAL
+TEKS DAN ELEMEN DIGITAL
 ${overlay}
 
-PEMERIKSAAN AKHIR
-Pastikan semua target yang dipilih YA telah terganti di setiap kemunculannya. Pastikan tidak ada target asli yang tertinggal, tidak ada wajah ganda, karakter bercampur, flicker, atau ghosting. Pastikan semua orang yang dijawab TIDAK tetap sama seperti video asli.
+DAFTAR CEK SEBELUM HASIL AKHIR
+- Semua kemunculan target yang terlihat sudah diganti.
+- Tidak ada target asli yang tertinggal atau muncul kembali.
+- Wajah karakter pengganti konsisten di seluruh shot.
+- Tidak ada orang lain yang ikut terganti.
+- Tidak ada wajah ganda, wajah bercampur, flicker, ghosting, atau perubahan latar yang tidak diminta.
 
 NEGATIVE PROMPT
-Missed selected target, unchanged selected target in any shot, original selected target reappearing, incomplete replacement, replacing a person marked NO, changing unselected characters, identity drift, different replacement face, generic face, duplicate person, mixed characters, flicker, ghosting, changed scene, changed camera, changed lighting, unintended outfit or background changes.
+Missed target, original target reappearing, incomplete replacement, replacing the wrong person, changing people marked NO, changing unselected characters, identity drift, inconsistent replacement face, generic face, mixed identities, duplicate face, flicker, ghosting, altered motion, altered camera, altered framing, altered lighting, unintended outfit changes, unintended background changes.
 
-PENTING: Jika aplikasi video tidak mampu memproses seluruh durasi atau banyak referensi sekaligus, bagi video menjadi klip per adegan. Sertakan capture yang sesuai pada setiap klip dan gunakan Character Sheet yang sama. Prompt tidak dapat memaksa fitur yang tidak didukung aplikasi.
+BATASAN PENTING
+Instruksi ini tidak menjamin aplikasi generator dapat memproses seluruh durasi atau semua frame sekaligus. Jika ada batas durasi atau referensi, bagi video menjadi klip per adegan, gunakan foto/Character Sheet pengganti yang sama dan lembar target gabungan yang sama, lalu periksa setiap klip sebelum digabungkan. Jangan menyatakan hasil lengkap sebelum seluruh shot diperiksa.
 `;
 }
 function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
