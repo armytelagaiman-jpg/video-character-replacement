@@ -158,42 +158,26 @@ function renderIdentityConfirmation(index){
  if(!host||!target?.analysis)return;
  const a=target.analysis;
  if(!a.candidateAnswers)a.candidateAnswers={};
- host.innerHTML='<h4 style="margin:12px 0 6px">Periksa setiap kandidat</h4><p class="hint">Untuk SETIAP potongan orang, jawab sendiri: “Ya” jika itu target yang dicari, atau “Tidak” jika bukan. Semua kandidat dapat dijawab satu per satu; jawaban tidak saling menghapus.</p>'+
+ const readiness=a.results.map((r,i)=>{
+  const answers=r.candidates.map(p=>a.candidateAnswers[i+':'+p.index]||'');
+  return {complete:answers.length>0&&answers.every(x=>x==='yes'||x==='no'),oneYes:answers.filter(x=>x==='yes').length===1};
+ });
+ const allReady=readiness.length>0&&readiness.every(x=>x.complete&&x.oneYes);
+ a.identityVerified=allReady;
+ a.selections=allReady?a.results.map((r,i)=>Number(r.candidates.find(p=>a.candidateAnswers[i+':'+p.index]==='yes').index)):a.results.map(()=>null);
+ host.innerHTML='<h4 style="margin:12px 0 6px">Periksa setiap kandidat</h4><p class="hint">Pilih “Ya, ini target” untuk tepat satu kandidat di setiap capture. Pilih “Tidak” untuk semua kandidat lainnya. Setelah semua jawaban lengkap dan tepat satu Ya per capture, tombol Lanjut bisa digunakan otomatis.</p>'+
  a.results.map((r,i)=>{
-  return '<div class="identity-capture"><b>Capture '+(i+1)+'</b><div class="identity-options">'+r.candidates.map((p,j)=>{
+  return '<div class="identity-capture"><b>Capture '+(i+1)+'</b><div class="identity-options">'+r.candidates.map((p)=>{
    const key=i+':'+p.index,answer=a.candidateAnswers[key]||'';
    return '<div class="identity-option"><img src="'+p.preview+'" alt="Kandidat '+p.index+'"><div><b>Kandidat #'+p.index+'</b><div class="identity-confirm-actions" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button type="button" class="btn '+(answer==='yes'?'primary':'secondary')+'" data-candidate-answer="yes" data-capture="'+i+'" data-candidate="'+p.index+'">Ya, ini target</button><button type="button" class="btn '+(answer==='no'?'primary':'secondary')+'" data-candidate-answer="no" data-capture="'+i+'" data-candidate="'+p.index+'">Tidak</button></div><p class="hint">Jawaban: '+(answer==='yes'?'Ya':answer==='no'?'Tidak':'Belum dijawab')+'</p></div></div>';
-  }).join('')+'</div></div>';
+  }).join('')+'</div><p class="hint">Status capture: '+(readiness[i].complete?(readiness[i].oneYes?'Lengkap — satu kandidat Ya.':'Perlu tepat satu kandidat Ya.'):'Masih ada kandidat yang belum dijawab.')+'</p></div>';
  }).join('')+
- '<div class="identity-confirm-actions" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button type="button" class="btn primary" data-identity-yes>Ya, semua jawaban benar</button><button type="button" class="btn secondary" data-identity-no>Tidak, periksa lagi</button></div>'+
- '<p class="hint" id="identity-state-'+index+'">'+(a.identityVerified?'Konfirmasi tersimpan.':'Jawab Ya/Tidak untuk setiap kandidat, lalu konfirmasi hasilnya.')+'</p>';
+ '<p class="hint" id="identity-state-'+index+'">'+(allReady?'Semua jawaban lengkap dan benar. Bunda bisa langsung klik Lanjut.':'Belum siap lanjut. Pastikan semua kandidat dijawab dan tepat satu kandidat Ya pada setiap capture.')+'</p>';
  host.querySelectorAll('[data-candidate-answer]').forEach(btn=>btn.onclick=()=>{
   const i=Number(btn.dataset.capture),candidate=Number(btn.dataset.candidate),answer=btn.dataset.candidateAnswer;
   a.candidateAnswers[i+':'+candidate]=answer;
-  a.identityVerified=false;
-  const state=document.getElementById('identity-state-'+index);if(state)state.textContent='Jawaban tersimpan untuk kandidat ini. Lanjutkan menjawab kandidat lainnya.';
   renderIdentityConfirmation(index);
  });
- const yes=host.querySelector('[data-identity-yes]'),no=host.querySelector('[data-identity-no]');
- if(yes)yes.onclick=()=>{
-  const valid=a.results.every((r,i)=>{
-   const answers=r.candidates.map(p=>a.candidateAnswers[i+':'+p.index]||'');
-   return answers.length>0&&answers.every(x=>x==='yes'||x==='no')&&answers.filter(x=>x==='yes').length===1;
-  });
-  if(!valid){
-   a.identityVerified=false;
-   const state=document.getElementById('identity-state-'+index);
-   if(state)state.textContent='Belum bisa dikonfirmasi. Jawab Ya atau Tidak untuk semua kandidat dan pilih tepat satu jawaban Ya pada setiap capture.';
-   return;
-  }
-  a.selections=a.results.map((r,i)=>Number(r.candidates.find(p=>a.candidateAnswers[i+':'+p.index]==='yes').index));
-  a.identityVerified=true;
-  const state=document.getElementById('identity-state-'+index);if(state)state.textContent='Konfirmasi tersimpan. Satu kandidat telah ditandai Ya pada setiap capture; kandidat lainnya Tidak.';
- };
- if(no)no.onclick=()=>{
-  a.identityVerified=false;
-  const state=document.getElementById('identity-state-'+index);if(state)state.textContent='Belum dikonfirmasi. Bunda bisa mengubah jawaban Ya/Tidak pada kandidat mana pun.';
- };
 }
 function render(){
  drawProgress();
