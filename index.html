@@ -147,7 +147,7 @@ async function analyzeTargetCaptures(index){
   const pairLines=comparisons.map(c=>"Capture 1 vs "+c.b+": "+(c.similarity===null?"tidak dapat dibandingkan":"kemiripan tampilan visual "+Math.round(c.similarity*100)+"% (skor cosine, bukan probabilitas identitas)"));
   const traitNote=traitPrompt?"Model membandingkan setiap kandidat dengan deskripsi bebas yang dimasukkan pengguna; tidak ada daftar ciri fisik tetap di dalam tools.":"Deskripsi target kosong; pemeringkatan hanya memakai posisi/ukuran.";
   const summary="HASIL ANALISIS: "+results.length+" capture selesai. "+(traitPrompt?"Deskripsi target sudah dibandingkan dengan kandidat pada setiap capture.":"Deskripsi target belum diisi.")+nl+results.map((r,i)=>"Capture "+(i+1)+": "+(r.candidates[0]?"kandidat #"+r.candidates[0].index+"; kecocokan deskripsi "+(r.candidates[0].traitScore===null?"tidak tersedia":Math.round(r.candidates[0].traitScore*100)+"/100"):"tidak ada kandidat")).join(nl)+nl+"CATATAN: Ini perkiraan visual, bukan kepastian identitas. Periksa apakah kandidat di semua capture memang orang yang sama.";
-  target.analysis={model:"YOLOS-Tiny + CLIP zero-shot description matching + image features",results:results.map(r=>({...r,candidates:r.candidates.map(c=>({...c,embedding:undefined}))})),comparisons,summary,description:descriptionAtStart,identityVerified:false,selections:results.map(r=>r.candidates[0]?.index??null),createdAt:new Date().toISOString()};
+  target.analysis={model:"YOLOS-Tiny + CLIP zero-shot description matching + image features",results:results.map(r=>({...r,candidates:r.candidates.map(c=>({...c,embedding:undefined}))})),comparisons,summary,description:descriptionAtStart,identityVerified:false,selections:results.map(()=>null),createdAt:new Date().toISOString()};
   target.analysisStatus="done";out.className="ai-status ok";out.textContent=summary;renderIdentityConfirmation(index);
  }catch(err){target.analysisStatus="error";target.analysis=null;out.className="ai-status err";out.textContent="Analisis gagal: "+(err?.message||String(err))+" | Tahap: "+(out.dataset.stage||"tidak diketahui")+" | Detail: "+String(err?.stack||"stack tidak tersedia").split("\n").slice(0,3).join(" | ")}
  finally{button.disabled=false;button.textContent="Ulangi analisis "+(index+1)}
@@ -159,22 +159,28 @@ function renderIdentityConfirmation(index){
  const a=target.analysis;
  host.innerHTML='<h4 style="margin:12px 0 6px">Konfirmasi orang yang sama</h4><p class="hint">Periksa potongan orang pada setiap capture. Pilih orang yang memang menjadi target. Jika orangnya sama di semua capture, centang konfirmasi di bawah.</p>'+
  a.results.map((r,i)=>{
-  const chosen=a.selections?.[i]??r.candidates[0]?.index??null;
-  return '<div class="identity-capture"><b>Capture '+(i+1)+'</b><div class="identity-options">'+r.candidates.map((p,j)=>'<label class="identity-option"><img src="'+p.preview+'" alt="Kandidat '+p.index+'"><span><input type="radio" name="identity-'+index+'-'+i+'" data-identity-capture="'+i+'" value="'+p.index+'" '+(Number(chosen)===Number(p.index)?'checked':'')+'> Kandidat #'+p.index+'</span></label>').join('')+'</div></div>';
+  const chosen=a.selections?.[i]??null;
+  return '<div class="identity-capture"><b>Capture '+(i+1)+'</b><div class="identity-options">'+r.candidates.map((p,j)=>'<label class="identity-option"><img src="'+p.preview+'" alt="Kandidat '+p.index+'"><span><input type="radio" name="identity-'+index+'-'+i+'" data-identity-capture="'+i+'" value="'+p.index+'" '+(Number(chosen)===Number(p.index)?'checked':'')+'> Kandidat #'+p.index+'</span></label>').join('')+'</div><button type="button" class="btn secondary" data-clear-capture="'+i+'" style="margin-top:8px">Batalkan pilihan capture ini</button></div>';
  }).join('')+
- '<label class="check" style="margin-top:12px"><input type="checkbox" data-identity-confirm '+(a.identityVerified?'checked':'')+'> Saya sudah memeriksa semua capture dan memastikan pilihan ini adalah orang yang sama.</label>'+
- '<p class="hint" id="identity-state-'+index+'">'+(a.identityVerified?'Konfirmasi tersimpan.':'Konfirmasi diperlukan sebelum lanjut.')+'</p>';
+ '<div class="identity-confirm-actions" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:14px"><button type="button" class="btn primary" data-identity-yes>Ya, benar — orangnya sama</button><button type="button" class="btn secondary" data-identity-no>Tidak / Belum yakin</button></div>'+
+ '<p class="hint" id="identity-state-'+index+'">'+(a.identityVerified?'Konfirmasi tersimpan.':'Pilih kandidat pada setiap capture, lalu jawab Ya atau Tidak.')+'</p>';
  host.querySelectorAll('[data-identity-capture]').forEach(input=>input.onchange=()=>{
   a.selections[Number(input.dataset.identityCapture)]=Number(input.value);
   a.identityVerified=false;
-  const confirm=host.querySelector('[data-identity-confirm]');if(confirm)confirm.checked=false;
-  const state=document.getElementById('identity-state-'+index);if(state)state.textContent='Pilihan berubah. Periksa kembali lalu konfirmasi.';
+  const state=document.getElementById('identity-state-'+index);if(state)state.textContent='Pilihan berubah. Jawab Ya atau Tidak untuk menyimpan konfirmasi.';
  });
- const confirm=host.querySelector('[data-identity-confirm]');
- if(confirm)confirm.onchange=()=>{
-  a.identityVerified=confirm.checked;
-  const state=document.getElementById('identity-state-'+index);
-  if(state)state.textContent=confirm.checked?'Konfirmasi tersimpan.':'Konfirmasi dibatalkan.';
+ host.querySelectorAll('[data-clear-capture]').forEach(btn=>btn.onclick=()=>{
+  const i=Number(btn.dataset.clearCapture);a.selections[i]=null;a.identityVerified=false;
+  const radio=host.querySelectorAll('[data-identity-capture="'+i+'"]');radio.forEach(x=>x.checked=false);
+  const state=document.getElementById('identity-state-'+index);if(state)state.textContent='Pilihan Capture '+(i+1)+' dibatalkan. Silakan pilih ulang.';
+ });
+ const yes=host.querySelector('[data-identity-yes]'),no=host.querySelector('[data-identity-no]');
+ if(yes)yes.onclick=()=>{
+  if(!Array.isArray(a.selections)||a.selections.some(x=>x===null)){a.identityVerified=false;const state=document.getElementById('identity-state-'+index);if(state)state.textContent='Belum bisa dikonfirmasi. Pilih satu kandidat untuk setiap capture terlebih dahulu.';return;}
+  a.identityVerified=true;const state=document.getElementById('identity-state-'+index);if(state)state.textContent='Ya, konfirmasi tersimpan. Semua kandidat dipilih sebagai orang yang sama.';
+ };
+ if(no)no.onclick=()=>{
+  a.identityVerified=false;const state=document.getElementById('identity-state-'+index);if(state)state.textContent='Belum dikonfirmasi. Periksa atau batalkan pilihan kandidat yang keliru, lalu pilih kembali.';
  };
 }
 function render(){
