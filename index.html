@@ -367,7 +367,14 @@ CAKUPAN PENGGANTIAN — PERIKSA SELURUH VIDEO
 IDENTITAS KARAKTER PENGGANTI
 ${identity}
 ${sheet}
-Pertahankan wajah dan identitas karakter pengganti tetap sama pada semua shot, sudut kamera, ekspresi, dan gerakan. Jangan membuat wajah generik, menggabungkan dua identitas, atau mengubah ciri wajah antar-shot.
+KUNCI IDENTITAS WAJAH KARAKTER PENGGANTI — PRIORITAS MUTLAK
+- Foto referensi/Character Sheet karakter pengganti adalah satu-satunya sumber identitas wajah. Jangan mengambil, mencampur, atau mewarisi fitur wajah dari orang asli dalam video sumber.
+- Pertahankan bentuk wajah, mata, alis, hidung, bibir, rahang, dagu, telinga, garis rambut, warna kulit, tekstur, usia tampak, dan ciri khas persis mengikuti referensi karakter pengganti.
+- KUNCI KUMIS/JENGGOT: rambut wajah (kumis, jenggot, jambang, goatee, stubble/bayangan jenggot) wajib mengikuti foto referensi karakter pengganti, bukan wajah target asli. Jika karakter pengganti pada referensi bersih tanpa kumis dan jenggot, hasil harus clean-shaven di SEMUA frame. Jangan menambahkan atau mempertahankan kumis/jenggot milik karakter asli. Jika referensi memang memiliki rambut wajah, pertahankan bentuk dan kepadatannya secara konsisten.
+- Wajah pengganti harus orang yang sama dan mudah dikenali pada setiap frame. Jangan berubah menjadi wajah lain saat sudut, ekspresi, outfit, pencahayaan, atau adegan berubah.
+- Jangan membuat wajah generik, mempercantik, mengubah usia, mengubah proporsi, menggabungkan dua identitas, atau melakukan face morphing.
+- Jika generator tidak mampu mempertahankan wajah referensi dengan stabil, jangan mengarang wajah alternatif; proses klip pendek per adegan dan gunakan referensi identitas yang sama.
+
 ${outfit}
 ${background}
 GAYA VISUAL: ${style}.
@@ -381,12 +388,13 @@ ${overlay}
 DAFTAR CEK SEBELUM HASIL AKHIR
 - Semua kemunculan target yang terlihat sudah diganti.
 - Tidak ada target asli yang tertinggal atau muncul kembali.
-- Wajah karakter pengganti konsisten di seluruh shot.
+- Wajah karakter pengganti konsisten di seluruh shot dan benar-benar mengikuti foto referensi.
+- Kumis/jenggot karakter pengganti sama persis dengan referensi; jangan mewarisi kumis/jenggot karakter asli.
 - Tidak ada orang lain yang ikut terganti.
 - Tidak ada wajah ganda, wajah bercampur, flicker, ghosting, atau perubahan latar yang tidak diminta.
 
 NEGATIVE PROMPT
-Missed target, original target reappearing, incomplete replacement, replacing the wrong person, changing people marked NO, changing unselected characters, identity drift, inconsistent replacement face, generic face, mixed identities, duplicate face, flicker, ghosting, altered motion, altered camera, altered framing, altered lighting, unintended outfit changes, unintended background changes.
+Missed target, original target reappearing, incomplete replacement, replacing the wrong person, changing people marked NO, changing unselected characters, identity drift, inconsistent replacement face, generic face, mixed identities, duplicate face, original person's moustache, original person's beard, unwanted moustache, unwanted beard, unwanted stubble, facial hair transfer from source actor, changing facial hair between frames, flicker, ghosting, altered motion, altered camera, altered framing, altered lighting, unintended outfit changes, unintended background changes.
 
 BATASAN PENTING
 Instruksi ini tidak menjamin aplikasi generator dapat memproses seluruh durasi atau semua frame sekaligus. Jika ada batas durasi atau referensi, bagi video menjadi klip per adegan, gunakan foto/Character Sheet pengganti yang sama dan lembar target gabungan yang sama, lalu periksa setiap klip sebelum digabungkan. Jangan menyatakan hasil lengkap sebelum seluruh shot diperiksa.
