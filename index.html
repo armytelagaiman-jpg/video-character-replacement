@@ -35,7 +35,7 @@ let detectorPromise=null;
 async function getPersonDetector(){
  if(!detectorPromise){
   detectorPromise=(async()=>{
-   const lib=await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2");
+   const lib=await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1");
    lib.env.allowRemoteModels=true;lib.env.allowLocalModels=false;lib.env.useBrowserCache=true;
    if(lib.env.backends?.onnx?.wasm)lib.env.backends.onnx.wasm.numThreads=1;
    return await lib.pipeline("object-detection","Xenova/yolos-tiny",{device:"wasm",dtype:"q4"});
@@ -47,7 +47,7 @@ let visualFeaturePromise=null;
 async function getVisualFeatureExtractor(){
  if(!visualFeaturePromise){
   visualFeaturePromise=(async()=>{
-   const lib=await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2");
+   const lib=await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1");
    lib.env.allowRemoteModels=true;lib.env.allowLocalModels=false;lib.env.useBrowserCache=true;
    if(lib.env.backends?.onnx?.wasm)lib.env.backends.onnx.wasm.numThreads=1;
    return await lib.pipeline("image-feature-extraction","Xenova/clip-vit-base-patch32",{device:"wasm"});
@@ -60,7 +60,7 @@ let attributeClassifierPromise=null;
 async function getAttributeClassifier(){
  if(!attributeClassifierPromise){
   attributeClassifierPromise=(async()=>{
-   const lib=await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.7.2");
+   const lib=await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@3.8.1");
    lib.env.allowRemoteModels=true;lib.env.allowLocalModels=false;lib.env.useBrowserCache=true;
    if(lib.env.backends?.onnx?.wasm)lib.env.backends.onnx.wasm.numThreads=1;
    return await lib.pipeline("zero-shot-image-classification","Xenova/clip-vit-base-patch32",{device:"wasm"});
@@ -158,7 +158,7 @@ async function analyzeTargetCaptures(index){
   const summary="DESKRIPSI TARGET: "+(descriptionAtStart||"belum diisi")+"."+nl+traitNote+nl+lines.join(nl)+nl+"PERBANDINGAN TAMPILAN KANDIDAT UTAMA"+nl+(pairLines.join(nl)||"Belum ada pasangan capture untuk dibandingkan.")+nl+"CATATAN: Pemeringkatan menggabungkan kecocokan visual ciri fisik yang dikenali model CLIP dengan posisi/ukuran. Skor kecocokan bukan probabilitas identitas dan model dapat keliru, terutama jika wajah kecil, tertutup, buram, atau terlihat dari samping. Perbandingan CLIP antarcapture juga hanya kemiripan tampilan, bukan verifikasi bahwa orangnya sama. Konfirmasi kandidat secara visual.";
   target.analysis={model:"YOLOS-Tiny + CLIP zero-shot physical-trait matching + image features",results:results.map(r=>({...r,candidates:r.candidates.map(c=>({...c,embedding:undefined}))})),comparisons,summary,description:descriptionAtStart,identityVerified:false,createdAt:new Date().toISOString()};
   target.analysisStatus="done";out.className="ai-status ok";out.textContent=summary;
- }catch(err){target.analysisStatus="error";target.analysis=null;out.className="ai-status err";out.textContent="Analisis gagal: "+(err?.message||String(err))+". Periksa koneksi internet atau kapasitas perangkat, lalu coba lagi."}
+ }catch(err){target.analysisStatus="error";target.analysis=null;out.className="ai-status err";out.textContent="Analisis gagal pada model AI: "+(err?.message||String(err))+(err?.stack?"\\nDetail teknis: "+String(err.stack).split("\\n").slice(0,3).join(" | "):"")+". Versi model diperbarui; jika gagal lagi, detail ini membantu melacak tahap yang bermasalah."}
  finally{button.disabled=false;button.textContent="Ulangi analisis "+(index+1)}
 }
 function render(){
