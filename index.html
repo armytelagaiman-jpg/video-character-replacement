@@ -108,8 +108,8 @@ async function analyzeTargetCaptures(index){
  target.analysisStatus="running";out.dataset.stage="memuat model";
  try{
   out.dataset.stage="memuat detektor orang";const detector=await getPersonDetector();out.dataset.stage="memuat pembanding visual";const extractor=await getVisualFeatureExtractor();
-  const traits=makePhysicalTraitLabels(descriptionAtStart);
-  out.dataset.stage="memuat pencocok ciri fisik";const classifier=traits.length?await getAttributeClassifier():null;
+  const traitPrompt=makePhysicalTraitLabels(descriptionAtStart);
+  out.dataset.stage="memuat pencocok deskripsi target";const classifier=traitPrompt?await getAttributeClassifier():null;
   const results=[];
   for(let n=0;n<filesAtStart.length;n++){
    if(S.targets[index]!==target||target.captures.length!==filesAtStart.length||target.captures.some((f,j)=>f!==filesAtStart[j]))throw new Error("Daftar capture berubah saat analisis berjalan. Jalankan ulang analisis.");
