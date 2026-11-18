@@ -217,8 +217,8 @@ function render(){
  if(current===7){const missing=[];if(!S.videoName)missing.push("video sumber");if(S.targets.some(t=>!t.description.trim()))missing.push("deskripsi target");if(S.targets.some(t=>!t.captures||!t.captures.length))missing.push("minimal satu capture video untuk setiap target");if(S.targets.some(t=>!t.photos.length))missing.push("foto referensi tiap target");if(S.targets.some(t=>!t.fullbody))missing.push("konfirmasi foto full-body tiap target");if(!S.outfit)missing.push("sumber outfit");if(!S.background)missing.push("sumber background");if(!S.style)missing.push("gaya visual");if(!S.sheet)missing.push("pilihan Character Sheet");if(S.sheet==="yes"&&(!S.sheetFiles.length||!S.sheetApproved))missing.push("minimal satu gambar Character Sheet baru diunggah dan disetujui");if(S.sheet==="yes"&&S.sheetIssue&&!S.sheetRevisionUploaded)missing.push("hasil Character Sheet revisi harus diunggah ulang setelah memilih jenis kesalahan");if(S.sheet==="yes"&&S.sheetIssue==="outfit"&&!S.outfitCorrectionFiles.length)missing.push("foto outfit yang benar untuk revisi Character Sheet");if(S.sheet==="no"&&S.existingSheetFiles.length&&!S.existingSheetApproved)missing.push("persetujuan Character Sheet milik pengguna");if(S.sheet==="yes"&&S.outfit==="video"&&!S.outfitFrameName)missing.push("screenshot outfit video untuk Character Sheet");if(!S.overlay)missing.push("pilihan tulisan dan ikon");if(S.overlay==="remove"&&!S.removeItems.length&&!S.overlayNotes.trim())missing.push("daftar elemen yang akan dihapus");shell("8. Periksa konfigurasi","Pastikan semua pilihan benar sebelum menyusun prompt.",`${missing.length?`<div class="notice">Masih perlu dilengkapi: ${missing.join(", ")}.</div>`:'<div class="notice success">Konfigurasi dasar sudah lengkap. Periksa ringkasan di bawah.</div>'}<div class="summary"><b>Video</b><span>${S.videoName||"Belum dipilih"}</span></div><div class="summary"><b>Target</b><span>${S.targetCount} karakter</span></div>${S.targets.map((t,i)=>`<div class="summary"><b>Target ${i+1}</b><span>${t.description||"Belum dijelaskan"} · ${(t.captures||[]).length} capture video · ${t.photos.length} foto referensi · full-body: ${t.fullbody?"Ya":"Belum dikonfirmasi"}</span></div>`).join("")}<div class="summary"><b>Outfit</b><span>${S.outfit||"Belum dipilih"}</span></div><div class="summary"><b>Background</b><span>${S.background||"Belum dipilih"}</span></div><div class="summary"><b>Character Sheet</b><span>${S.sheet==="yes"?"Dibuat baru · "+(S.sheetFile||"belum diunggah")+" · maksimal 2 gambar · "+(S.sheetApproved?"disetujui":"belum disetujui"):S.sheet==="no"?(S.existingSheetFile?"Menggunakan file milik pengguna · "+S.existingSheetFile+" · "+(S.existingSheetApproved?"disetujui":"belum disetujui"):"Tidak digunakan; memakai foto referensi langsung"):"Belum dipilih"}</span></div><div class="summary"><b>Gaya visual</b><span>${S.style||"Belum dipilih"}</span></div><div class="summary"><b>Tulisan & ikon</b><span>${S.overlay==="preserve"?"Pertahankan semua":S.overlay==="remove"?"Hapus: "+S.removeItems.join(", ")+" "+S.overlayNotes:"Belum dipilih"}</span></div><div class="notice">Catatan: persetujuan Character Sheet dan pemeriksaan kecocokan referensi tetap harus dilakukan sebelum prompt final dipakai jika Character Sheet dipilih.</div>`,true,"Buat prompt");document.getElementById("next").disabled=missing.length>0;}
  if(current===8){
  S.prompt=makePrompt();
- shell("9. Prompt video siap disalin","Prompt dan satu lembar gabungan target yang sudah dikonfirmasi. Tidak perlu melampirkan satu per satu semua capture.",
- '<div class="notice success">Lampiran yang disarankan: 1) video sumber, 2) foto/Character Sheet karakter pengganti, 3) satu lembar gabungan target. Capture lain cukup untuk analisis di tools ini.</div><div class="notice">PENTING: di generator video, setelah mengunggah gambar, ketik @ lalu pilih thumbnail Character Sheet dan lembar target secara eksplisit. Pastikan keduanya masih terlihat dan sudah tertaut sebelum Generate. Tool ini tidak dapat mengetahui label @ atau memastikan file eksternal sudah benar-benar terpasang.</div><div class="notice">BATAS KEMAMPUAN: analisis lokal membantu mendeteksi kandidat, tetapi tidak memverifikasi identitas orang lintas adegan dan tidak memindai otomatis seluruh frame video. Periksa hasil per adegan; bila target masih tertinggal atau wajah berubah, pecah video menjadi klip lebih pendek sebelum render ulang.</div><div class="actions" style="justify-content:flex-start"><button class="btn secondary" id="download-target-sheet">Unduh 1 lembar referensi target</button><button class="btn secondary" id="copy">Salin prompt</button></div><div class="prompt" id="prompt">'+esc(S.prompt)+'</div><div class="notice">Jika generator tidak menerima lembar gabungan, gunakan satu capture target paling jelas sebagai alternatif. Penggantian video dilakukan di aplikasi eksternal.</div>',
+ shell("9. Prompt video siap disalin","Prompt ringkas dengan Character Sheet dan Lembar Peta Target. Capture individual hanya untuk analisis di tools ini.",
+ '<div class="notice success">Lampiran yang disarankan: 1) video sumber, 2) foto/Character Sheet karakter pengganti, 3) Lembar Peta Target (panel-panel kandidat yang dikonfirmasi). Capture lain cukup untuk analisis di tools ini.</div><div class="notice">PENTING: di generator video, setelah mengunggah gambar, ketik @ lalu pilih thumbnail Character Sheet untuk identitas pengganti dan Lembar Peta Target untuk mengenali target. Pastikan keduanya masih terlihat dan sudah tertaut sebelum Generate. Tool ini tidak dapat mengetahui label @ atau memastikan file eksternal sudah benar-benar terpasang.</div><div class="notice">BATAS KEMAMPUAN: analisis lokal membantu mendeteksi kandidat, tetapi tidak memverifikasi identitas orang lintas adegan dan tidak memindai otomatis seluruh frame video. Periksa hasil per adegan; bila target masih tertinggal atau wajah berubah, pecah video menjadi klip lebih pendek sebelum render ulang.</div><div class="actions" style="justify-content:flex-start"><button class="btn secondary" id="download-target-sheet">Unduh Lembar Peta Target</button><button class="btn secondary" id="copy">Salin prompt</button></div><div class="prompt" id="prompt">'+esc(S.prompt)+'</div><div class="notice">Jika generator tidak menerima Lembar Peta Target, gunakan panel/capture target paling jelas sebagai alternatif. Penggantian video dilakukan di aplikasi eksternal.</div>',
  true,"Selesai");
  document.getElementById("next").onclick=()=>{current=0;render()};
  document.getElementById("copy").onclick=async()=>{await navigator.clipboard.writeText(S.prompt);document.getElementById("copy").textContent="Tersalin ✓"};
@@ -299,102 +299,62 @@ async function downloadTargetContactSheet(){
  const canvas=document.createElement("canvas");canvas.width=cols*cellW+pad*2;canvas.height=rows*(cellH+headH)+pad*2;
  const ctx=canvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);
  for(let i=0;i<entries.length;i++){const img=new Image();img.src=entries[i].src;await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject});const x=pad+(i%cols)*cellW,y=pad+Math.floor(i/cols)*(cellH+headH);ctx.fillStyle="#111827";ctx.font="bold 22px Arial";ctx.fillText(entries[i].label,x,y+30);const scale=Math.min((cellW-20)/img.width,cellH/img.height),w=img.width*scale,h=img.height*scale;ctx.drawImage(img,x+(cellW-w)/2,y+headH+(cellH-h)/2,w,h);}
- const link=document.createElement("a");link.download="target-confirmation-contact-sheet.jpg";link.href=canvas.toDataURL("image/jpeg",.92);link.click();
+ const link=document.createElement("a");link.download="lembar-peta-target.jpg";link.href=canvas.toDataURL("image/jpeg",.92);link.click();
 }
 function makePrompt(){
- const targets=S.targets.map((t,i)=>{
+ const targetMap=S.targets.map((t,i)=>{
   const a=t.analysis;
-  const verified=(a?.selections||[]).map((selected,j)=>{
-   const r=a.results?.[j],numbers=Array.isArray(selected)?selected:(selected==null?[]:[selected]);
-   const people=numbers.map(n=>{const p=r?.candidates?.find(x=>Number(x.index)===Number(n));return "kandidat #"+n+(Number.isFinite(p?.traitScore)? " (skor kecocokan deskripsi AI "+Math.round(p.traitScore*100)+"/100)": "");}).join(", ");
+  const rows=(a?.selections||[]).map((selected,j)=>{
+   const r=a.results?.[j],yes=Array.isArray(selected)?selected:(selected==null?[]:[selected]);
    const answers=a?.candidateAnswers||{};
-   const no=(r?.candidates||[]).filter(p=>answers[j+":"+p.index]==="no").map(p=>"#"+p.index).join(", ")||"tidak ada";
-   const filename=t.captures?.[j]?.name||r?.name||("Capture "+(j+1));
-   return "Capture "+(j+1)+" ("+filename+"): kandidat YA "+(people||"tidak tercatat")+"; kandidat TIDAK "+no+".";
-  }).join("\n");
-  return "TARGET "+(i+1)+": "+t.description+"\nPETA REFERENSI TERKONFIRMASI (pilihan pengguna, bukan keputusan AI):\n"+verified+"\nSemua kandidat YA adalah target sesuai konfirmasi pengguna. Semua kandidat TIDAK wajib dipertahankan sebagai orang asli. Skor AI hanya petunjuk deskriptif, bukan bukti identitas.";
- }).join("\n\n");
- const isFaceOnly=S.outfit==="video"&&S.background==="original";
- const replaceMode=isFaceOnly?"GANTI WAJAH SAJA":"GANTI SELURUH KARAKTER";
- const identity=isFaceOnly
-  ?"Ganti hanya wajah target dengan wajah dari foto referensi. Pertahankan rambut, kepala, tubuh, pakaian, dan aksesori asli video."
-  :"Ganti seluruh penampilan orang target dengan karakter pada foto referensi/Character Sheet. Pertahankan gerakan dan pose sumber.";
+   const no=(r?.candidates||[]).filter(p=>answers[j+":"+p.index]==="no").map(p=>"#"+p.index);
+   const file=t.captures?.[j]?.name||r?.name||("Capture "+(j+1));
+   return "Capture "+(j+1)+" ("+file+"): YA "+(yes.map(n=>"#"+n).join(", ")||"—")+"; TIDAK "+(no.join(", ")||"—")+".";
+  }).join("\\n");
+  return "TARGET "+(i+1)+": "+t.description+"\\n"+rows;
+ }).join("\\n\\n");
+ const faceOnly=S.outfit==="video"&&S.background==="original";
+ const task=faceOnly?"GANTI WAJAH TARGET":"GANTI SELURUH KARAKTER TARGET";
+ const identity=faceOnly
+  ?"Ganti wajah target saja. Pertahankan rambut, tubuh, pakaian, dan aksesori asli video."
+  :"Ganti seluruh penampilan target dengan karakter pada Character Sheet.";
  const outfit=S.outfit==="video"
-  ?"OUTFIT: pertahankan pakaian asli target dalam setiap adegan, termasuk perubahan pakaian yang memang terjadi di video."
-  :"OUTFIT: gunakan pakaian dari referensi karakter secara konsisten pada semua adegan.";
+  ?"OUTFIT: pertahankan pakaian asli target dari video."
+  :"OUTFIT: gunakan outfit Character Sheet secara konsisten.";
  const background=S.background==="original"
-  ?"BACKGROUND: pertahankan lokasi, latar, properti, dan komposisi asli video."
-  :"BACKGROUND: gunakan background referensi sesuai pilihan pengguna.";
+  ?"LATAR: pertahankan lokasi, properti, dan komposisi video sumber."
+  :"LATAR: ikuti pilihan background referensi pengguna.";
  const style=S.style==="realistic"?"Realistic Human":S.style==="3d"?"3D Animation":S.style==="manhwa"?"Premium Semi-Realistic Korean Manhwa":"Natural";
- const overlay=S.overlay==="preserve"
-  ?"Pertahankan semua teks, subtitle, logo, watermark, ikon, dan elemen grafis asli tanpa perubahan."
-  :"Hapus hanya elemen yang dipilih pengguna: "+S.removeItems.join(", ")+(S.overlayNotes?". Tambahan: "+S.overlayNotes:"")+". Jangan mengubah elemen lain.";
- const sheet=S.sheet==="yes"&&S.sheetFile?"Character Sheet yang disetujui: "+S.sheetFile+".":S.existingSheetFile?"Character Sheet referensi: "+S.existingSheetFile+".":"Gunakan foto referensi karakter yang diunggah.";
- return `TUGAS UTAMA: ${replaceMode} pada video sumber. Ganti hanya orang yang ditandai sebagai target di bawah dengan karakter referensi yang diunggah.
+ const overlays=S.overlay==="preserve"
+  ?"TEKS: pertahankan seluruh teks dan elemen grafis asli."
+  :"HAPUS hanya: "+S.removeItems.join(", ")+(S.overlayNotes?". "+S.overlayNotes:"")+". Pertahankan elemen lain.";
+ const sheet=S.sheet==="yes"&&S.sheetFile?"Character Sheet: "+S.sheetFile+".":S.existingSheetFile?"Character Sheet: "+S.existingSheetFile+".":"Gunakan Character Sheet yang diunggah.";
+ return `TUGAS: ${task} pada video sumber. Ganti hanya orang yang dijelaskan pada TARGET dan ditampilkan dalam panel LEMBAR PETA TARGET.
 
-PETA TARGET TERKONFIRMASI
-${targets}
+TARGET DAN PEMETAAN PANEL
+${targetMap}
 
-PEMETAAN LAMPIRAN — PERIKSA SEBELUM GENERATE
-1. VIDEO SUMBER: gunakan video yang diunggah sebagai sumber adegan dan gerakan.
-2. LEMBAR GABUNGAN TARGET: gunakan hanya untuk mencocokkan orang target yang telah dipilih YA. Ini BUKAN identitas karakter pengganti.
-3. CHARACTER SHEET / FOTO PENGGANTI: gunakan hanya sebagai sumber identitas karakter baru.
-PENTING UNTUK GENERATOR YANG MENDUKUNG @ IMAGE REFERENCE: setelah semua gambar terunggah, ketik @ pada kolom prompt dan PILIH thumbnail Character Sheet sebagai referensi identitas pengganti, lalu PILIH thumbnail lembar gabungan target sebagai referensi identifikasi target. Jangan menebak nomor image 1/image 2 karena urutan dapat berubah. Pastikan kedua referensi benar-benar terpilih/tertaut sebelum menekan Generate. Jika thumbnail hilang atau tidak dapat dipilih, hentikan proses dan unggah ulang; jangan lanjutkan dengan asumsi gambar tetap terpasang.
-Jangan tertukar antara lembar target dan foto karakter pengganti. Jangan meminta pengguna mengunggah semua capture satu per satu jika lembar gabungan sudah tersedia.
+FUNGSI REFERENSI
+- VIDEO SUMBER: acuan adegan, gerakan, kamera, dan kontinuitas.
+- LEMBAR PETA TARGET: panel-panelnya adalah acuan visual untuk menemukan orang target sesuai deskripsi TARGET dan pilihan YA/TIDAK di atas. Semua panel YA menunjukkan target yang harus diganti; panel TIDAK dan orang lain harus tetap asli.
+- CHARACTER SHEET: satu-satunya acuan identitas karakter pengganti. ${sheet}
+Jika generator mendukung @ reference, pilih Character Sheet untuk identitas pengganti dan Lembar Peta Target untuk mengenali target. Pastikan keduanya benar-benar tertaut sebelum Generate.
 
-ATURAN IDENTIFIKASI TARGET
-- Cocokkan orang berdasarkan ciri fisik dan wajah yang terlihat, bukan hanya pakaian, lokasi, ukuran, atau posisi di tengah.
-- Gunakan seluruh potongan target yang dikonfirmasi untuk memahami bahwa orang yang sama dapat tampil dengan outfit, pose, sudut, jarak kamera, ekspresi, dan pencahayaan berbeda.
-- Lacak identitas target secara konsisten dari satu shot ke shot berikutnya, termasuk saat berpindah posisi atau muncul kembali setelah tidak terlihat.
-- Ganti hanya target yang dipetakan. Jangan mengganti orang di sebelahnya, orang yang mirip, atau kandidat yang dijawab TIDAK.
-- Jika identitas pada suatu shot benar-benar tidak dapat dipastikan, jangan menebak dan jangan mengganti orang lain.
+PENGGANTIAN DAN IDENTITAS
+${identity} Pertahankan wajah dan seluruh ciri Character Sheet, termasuk rambut serta ada/tidaknya kumis, jenggot, kacamata, tato, dan aksesori. Jangan mewarisi atau mencampur fitur dari orang asli. Wajah pengganti harus konsisten di semua kemunculan.
 
-CAKUPAN PENGGANTIAN — PERIKSA SELURUH VIDEO
-1. Telusuri video dari awal sampai akhir, shot demi shot.
-2. Catat setiap shot yang menampilkan target, termasuk kemunculan singkat, close-up, wide shot, latar ramai, dan bagian tubuh yang tertutup sebagian.
-3. Terapkan penggantian pada setiap kemunculan target dan sepanjang frame ketika target terlihat.
-4. Pastikan target asli tidak muncul kembali pada shot berikutnya setelah sempat terganti.
-5. Jangan mengubah karakter lain, objek, atau bagian adegan yang tidak diminta.
-6. Lakukan pemeriksaan akhir per shot. Jika masih ada target asli yang tertinggal, perbaiki shot itu sebelum hasil dianggap selesai.
-
-IDENTITAS KARAKTER PENGGANTI
-${identity}
-${sheet}
-KUNCI IDENTITAS WAJAH KARAKTER PENGGANTI — PRIORITAS MUTLAK
-- Foto referensi/Character Sheet karakter pengganti adalah satu-satunya sumber identitas wajah. Jangan mengambil, mencampur, atau mewarisi fitur wajah dari orang asli dalam video sumber.
-- Pertahankan bentuk wajah, mata, alis, hidung, bibir, rahang, dagu, telinga, garis rambut, warna kulit, tekstur, usia tampak, dan ciri khas persis mengikuti referensi karakter pengganti.
-- KUNCI KUMIS/JENGGOT: rambut wajah (kumis, jenggot, jambang, goatee, stubble/bayangan jenggot) wajib mengikuti foto referensi karakter pengganti, bukan wajah target asli. Jika karakter pengganti pada referensi bersih tanpa kumis dan jenggot, hasil harus clean-shaven di SEMUA frame. Jangan menambahkan atau mempertahankan kumis/jenggot milik karakter asli. Jika referensi memang memiliki rambut wajah, pertahankan bentuk dan kepadatannya secara konsisten.
-- Wajah pengganti harus orang yang sama dan mudah dikenali pada setiap frame. Jangan berubah menjadi wajah lain saat sudut, ekspresi, outfit, pencahayaan, atau adegan berubah.
-- Jangan membuat wajah generik, mempercantik, mengubah usia, mengubah proporsi, menggabungkan dua identitas, atau melakukan face morphing.
-- IDENTITAS PENGGANTI BERSIFAT UNIVERSAL: semua ciri yang benar-benar tampak pada Character Sheet wajib dipertahankan, termasuk ada/tidaknya kumis, jenggot, jambang, stubble, kacamata, tato, gaya rambut, dan aksesori. Jangan menetapkan ciri yang tidak terlihat atau mengubah ciri yang memang ada pada referensi.
-- DILARANG TRANSFER FITUR: jangan menyalin rambut wajah, bentuk rahang, garis rambut, warna kulit, usia tampak, atau aksesori dari aktor asli ke karakter pengganti. Jangan menghapus fitur yang memang dimiliki karakter pengganti.
-- Terapkan identitas pengganti yang sama pada setiap kemunculan target, termasuk close-up, wide shot, shot kelompok, dan kemunculan singkat.
-- Jika generator tidak mampu mempertahankan wajah referensi dengan stabil atau tidak mampu mengganti seluruh kemunculan, jangan mengarang wajah alternatif; proses klip pendek per adegan dan gunakan referensi identitas yang sama.
-
-${outfit}
-${background}
-GAYA VISUAL: ${style}.
+BATAS PENGGANTIAN
+Ganti target saja pada setiap shot saat terlihat, dari awal hingga akhir video. Jangan mengganti orang lain, termasuk kandidat TIDAK. Jika tidak yakin suatu orang adalah target, jangan menebak.
 
 GERAKAN DAN KONTINUITAS
-Ikuti gerakan tubuh, pose, ekspresi, arah pandang, gestur, timing, dan sinkronisasi bibir dari target asli. Pertahankan gerakan kamera, framing, perspektif, durasi, kecepatan, pencahayaan, bayangan, refleksi, filter, efek, warna, dan suasana video sumber. Hasil penggantian harus menyatu secara natural dengan tiap frame tanpa mengubah koreografi atau adegan.
+Pertahankan gerakan, pose, ekspresi, arah pandang, gestur, sinkronisasi bibir, timing, kamera, framing, pencahayaan, bayangan, efek, warna, dan suasana video sumber. ${outfit} ${background}
+GAYA VISUAL: ${style}. Hasil realistis dan menyatu natural pada setiap frame.
 
-TEKS DAN ELEMEN DIGITAL
-${overlay}
+${overlays}
 
-DAFTAR CEK SEBELUM HASIL AKHIR
-- Semua kemunculan target yang terlihat sudah diganti.
-- Tidak ada target asli yang tertinggal atau muncul kembali.
-- Wajah karakter pengganti konsisten di seluruh shot dan benar-benar mengikuti foto referensi.
-- Kumis/jenggot karakter pengganti sama persis dengan referensi; jangan mewarisi kumis/jenggot karakter asli.
-- Tidak ada orang lain yang ikut terganti.
-- Tidak ada wajah ganda, wajah bercampur, flicker, ghosting, atau perubahan latar yang tidak diminta.
+HINDARI: target asli tertinggal atau muncul kembali, salah mengganti orang, wajah berubah/generik/bercampur, kumis atau jenggot terbawa dari target, flicker, ghosting, perubahan gerakan, latar, atau karakter lain.
 
-NEGATIVE PROMPT
-Missed target, original target reappearing, incomplete replacement, replacing the wrong person, changing people marked NO, changing unselected characters, identity drift, inconsistent replacement face, generic face, mixed identities, duplicate face, original person's moustache, original person's beard, unwanted moustache, unwanted beard, unwanted stubble, facial hair transfer from source actor, changing facial hair between frames, flicker, ghosting, altered motion, altered camera, altered framing, altered lighting, unintended outfit changes, unintended background changes.
-
-BATASAN PENTING
-Instruksi ini tidak menjamin aplikasi generator dapat memproses seluruh durasi atau semua frame sekaligus. Jika ada batas durasi atau referensi, bagi video menjadi klip per adegan, gunakan foto/Character Sheet pengganti yang sama dan lembar target gabungan yang sama, lalu periksa setiap klip sebelum digabungkan. Jangan menyatakan hasil lengkap sebelum seluruh shot diperiksa.
-`;
+Jika seluruh kemunculan target tidak dapat diproses sekaligus, kerjakan per adegan dengan Character Sheet dan Lembar Peta Target yang sama, lalu periksa setiap klip sebelum digabungkan.`;
 }
 function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
 function go(dir){if(dir>0){if(current===1){S.targetCount=Number(S.targetCount);initTargets();document.querySelectorAll("textarea[id^=td]").forEach((e,i)=>{if(S.targets[i])S.targets[i].description=e.value});for(let ti=0;ti<S.targets.length;ti++){const t=S.targets[ti],a=t.analysis;if(!a||!Array.isArray(a.results))continue;const answers=a.candidateAnswers||{},selections=[];let problem="";for(let ci=0;ci<a.results.length;ci++){const candidates=a.results[ci].candidates||[];const yes=candidates.filter(p=>answers[ci+":"+p.index]==="yes");const unanswered=candidates.some(p=>answers[ci+":"+p.index]!=="yes"&&answers[ci+":"+p.index]!=="no");if(unanswered){problem="Capture "+(ci+1)+" pada Target "+(ti+1)+" masih memiliki kandidat yang belum dijawab.";break}if(yes.length===0){problem="Capture "+(ci+1)+" pada Target "+(ti+1)+" belum memiliki kandidat Ya.";break}selections.push(yes.map(p=>Number(p.index)))}if(problem){alert(problem+" Pilih Ya untuk semua orang yang memang target, Tidak untuk yang bukan target, lalu konfirmasi.");return}a.selections=selections;a.identityVerified=selections.length===a.results.length&&selections.length>0}}if(current===1&&S.targets.some(t=>!t.description.trim()||!t.captures||!t.captures.length)){alert("Setiap target wajib memiliki deskripsi dan minimal satu capture dari video sumber.");return}if(current===1&&S.targets.some(t=>!t.analysis||t.analysisStatus!=="done")){alert("Jalankan Analisis AI untuk setiap target terlebih dahulu.");return}if(current===1&&S.targets.some(t=>!t.analysis.identityVerified||!Array.isArray(t.analysis.selections)||t.analysis.selections.length!==t.analysis.results.length||t.analysis.selections.some(x=>!Array.isArray(x)||x.length===0))){alert("Konfirmasi pilihan target belum lengkap. Pastikan semua kandidat dijawab dan minimal satu kandidat Ya pada setiap capture.");return}if(current===2&&S.targets.some(t=>!t.photos.length||!t.fullbody)){alert("Setiap target wajib memiliki foto referensi dan konfirmasi foto full-body.");return}if(current===5&&S.sheet==="yes"&&S.sheetIssue&&!S.sheetRevisionUploaded){alert("Setelah memilih jenis kesalahan, generate ulang dengan prompt revisi dan unggah hasil Character Sheet yang baru.");return}if(current===5&&S.sheet==="yes"&&(!S.sheetFile||!S.sheetApproved)){alert("Unggah hasil Character Sheet dan setujui setelah diperiksa. Jika belum sesuai, pilih jenis kesalahan, ikuti prompt revisi, unggah hasil revisi, lalu setujui.");return}if(current===5&&S.sheet==="yes"&&S.sheetIssue==="outfit"&&!S.outfitCorrectionFiles.length){alert("Unggah foto outfit yang benar sebelum melanjutkan.");return}}current=Math.max(0,Math.min(8,current+dir));render()}
