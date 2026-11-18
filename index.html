@@ -249,9 +249,6 @@ GAYA VISUAL
 ${style[S.style]||"Ikuti gaya visual yang dipilih pengguna."}
 Terapkan gaya secara konsisten pada SEMUA panel. Jangan mencampur fotorealistik, 3D, dan ilustrasi dalam satu lembar.
 
-LABEL REFERENSI — WAJIB TERCETAK PADA GAMBAR
-Cantumkan judul jelas di bagian paling atas: "CHARACTER SHEET — IDENTITAS KARAKTER PENGGANTI". Tambahkan subjudul kecil: "ACUAN WAJAH, CIRI FISIK, DAN OUTFIT KARAKTER PENGGANTI". Label harus terbaca, rapi, konsisten, dan tidak menutupi wajah atau panel. Jangan gunakan istilah Lembar Peta Target pada gambar ini.
-
 FORMAT & TATA LETAK
 Satu kanvas vertikal 9:16 beresolusi tinggi, latar studio bersih netral, pencahayaan merata. Tata panel seperti production character bible premium: grid multi-bagian yang rapi, batas panel halus, jarak seimbang, karakter tidak terpotong, wajah cukup besar untuk diperiksa. Prioritaskan visual; label kecil boleh digunakan, tetapi jangan isi panel dengan paragraf atau data rekaan.
 
@@ -298,13 +295,10 @@ async function downloadTargetContactSheet(){
   }));
  });
  if(!entries.length){alert("Belum ada kandidat YA yang sudah dikonfirmasi.");return;}
- const cols=2,cellW=480,cellH=390,pad=28,headH=56,titleH=116,rows=Math.ceil(entries.length/cols);
- const canvas=document.createElement("canvas");canvas.width=cols*cellW+pad*2;canvas.height=titleH+rows*(cellH+headH)+pad*2;
+ const cols=2,cellW=480,cellH=390,pad=28,headH=56,rows=Math.ceil(entries.length/cols);
+ const canvas=document.createElement("canvas");canvas.width=cols*cellW+pad*2;canvas.height=rows*(cellH+headH)+pad*2;
  const ctx=canvas.getContext("2d");ctx.fillStyle="#fff";ctx.fillRect(0,0,canvas.width,canvas.height);
- ctx.fillStyle="#111827";ctx.font="bold 34px Arial";ctx.fillText("LEMBAR PETA TARGET",pad,pad+38);
- ctx.fillStyle="#475569";ctx.font="18px Arial";ctx.fillText("ACUAN VISUAL ORANG YANG HARUS DIGANTI",pad,pad+70);
- ctx.font="bold 15px Arial";ctx.fillStyle="#166534";ctx.fillText("PANEL YA = TARGET  |  PANEL TIDAK = PERTAHANKAN ORANG ASLI",pad,pad+96);
- for(let i=0;i<entries.length;i++){const img=new Image();img.src=entries[i].src;await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject});const x=pad+(i%cols)*cellW,y=titleH+pad+Math.floor(i/cols)*(cellH+headH);ctx.fillStyle="#111827";ctx.font="bold 22px Arial";ctx.fillText(entries[i].label,x,y+30);const scale=Math.min((cellW-20)/img.width,cellH/img.height),w=img.width*scale,h=img.height*scale;ctx.drawImage(img,x+(cellW-w)/2,y+headH+(cellH-h)/2,w,h);}
+ for(let i=0;i<entries.length;i++){const img=new Image();img.src=entries[i].src;await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=reject});const x=pad+(i%cols)*cellW,y=pad+Math.floor(i/cols)*(cellH+headH);ctx.fillStyle="#111827";ctx.font="bold 22px Arial";ctx.fillText(entries[i].label,x,y+30);const scale=Math.min((cellW-20)/img.width,cellH/img.height),w=img.width*scale,h=img.height*scale;ctx.drawImage(img,x+(cellW-w)/2,y+headH+(cellH-h)/2,w,h);}
  const link=document.createElement("a");link.download="lembar-peta-target.jpg";link.href=canvas.toDataURL("image/jpeg",.92);link.click();
 }
 function makePrompt(){
