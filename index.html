@@ -200,12 +200,12 @@ async function analyzeWholeVideo(){
   const detector=await getPersonDetector();const extractor=await getVisualFeatureExtractor();
   const video=document.createElement('video');video.muted=true;video.preload='auto';video.src=S.videoUrl;await new Promise((resolve,reject)=>{video.onloadedmetadata=resolve;video.onerror=()=>reject(new Error('Video tidak dapat dibaca browser.'));});
   const duration=video.duration;if(!Number.isFinite(duration)||duration<=0)throw new Error('Durasi video tidak valid.');
-  const interval=Math.max(1,duration/40);const maxFrames=40;const count=Math.min(maxFrames,Math.ceil(duration/interval));const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});const tracks=[];let nextId=1;
+  const interval=Math.max(1,duration/24);const maxFrames=24;const count=Math.min(maxFrames,Math.ceil(duration/interval));const canvas=document.createElement('canvas'),ctx=canvas.getContext('2d',{willReadFrequently:true});const tracks=[];let nextId=1;
   for(let i=0;i<count;i++){
    const time=Math.min(Math.max(0.05,i*interval),Math.max(.05,duration-.05));status.textContent='Memindai frame '+(i+1)+' dari '+count+' · '+formatTime(time);
    await new Promise((resolve,reject)=>{video.onseeked=resolve;video.onerror=reject;video.currentTime=time;});
    canvas.width=video.videoWidth;canvas.height=video.videoHeight;ctx.drawImage(video,0,0,canvas.width,canvas.height);const frame=canvas.toDataURL('image/jpeg',.82);
-   const detections=await detector(frame,{threshold:.22});const people=detections.filter(d=>String(d.label).toLowerCase()==='person').slice(0,8);const current=[];
+   const detections=await detector(frame,{threshold:.22});const people=detections.filter(d=>String(d.label).toLowerCase()==='person').slice(0,5);const current=[];
    for(const d of people){const box=d.box;const img=new Image();img.src=frame;await img.decode();const preview=cropPersonDataUrl(img,box);const features=await extractor(preview);current.push({box,preview,embedding:Array.from(features.data),time,score:d.score});}
    const used=new Set();
    for(const p of current){let best=null,bestScore=0;for(const t of tracks){if(used.has(t.id)||i-t.lastFrame>3)continue;const prev=t.lastBox;const ix=Math.max(0,Math.min(p.box.xmax,prev.xmax)-Math.max(p.box.xmin,prev.xmin));const iy=Math.max(0,Math.min(p.box.ymax,prev.ymax)-Math.max(p.box.ymin,prev.ymin));const inter=ix*iy,area1=(p.box.xmax-p.box.xmin)*(p.box.ymax-p.box.ymin),area2=(prev.xmax-prev.xmin)*(prev.ymax-prev.ymin),iou=inter/Math.max(1,area1+area2-inter);const sim=cosineSimilarity(p.embedding,t.embedding);const score=iou*.55+Math.max(0,sim)*.45;if(score>bestScore){bestScore=score;best=t;}}
