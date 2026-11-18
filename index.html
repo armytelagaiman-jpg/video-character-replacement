@@ -218,7 +218,7 @@ function render(){
  if(current===8){
  S.prompt=makePrompt();
  shell("9. Prompt video siap disalin","Prompt dan satu lembar gabungan target yang sudah dikonfirmasi. Tidak perlu melampirkan satu per satu semua capture.",
- '<div class="notice success">Lampiran yang disarankan: 1) video sumber, 2) foto/Character Sheet karakter pengganti, 3) satu lembar gabungan target. Capture lain cukup untuk analisis di tools ini.</div><div class="actions" style="justify-content:flex-start"><button class="btn secondary" id="download-target-sheet">Unduh 1 lembar referensi target</button><button class="btn secondary" id="copy">Salin prompt</button></div><div class="prompt" id="prompt">'+esc(S.prompt)+'</div><div class="notice">Jika generator tidak menerima lembar gabungan, gunakan satu capture target paling jelas sebagai alternatif. Penggantian video dilakukan di aplikasi eksternal.</div>',
+ '<div class="notice success">Lampiran yang disarankan: 1) video sumber, 2) foto/Character Sheet karakter pengganti, 3) satu lembar gabungan target. Capture lain cukup untuk analisis di tools ini.</div><div class="notice">PENTING: di generator video, setelah mengunggah gambar, ketik @ lalu pilih thumbnail Character Sheet dan lembar target secara eksplisit. Pastikan keduanya masih terlihat dan sudah tertaut sebelum Generate. Tool ini tidak dapat mengetahui label @ atau memastikan file eksternal sudah benar-benar terpasang.</div><div class="notice">BATAS KEMAMPUAN: analisis lokal membantu mendeteksi kandidat, tetapi tidak memverifikasi identitas orang lintas adegan dan tidak memindai otomatis seluruh frame video. Periksa hasil per adegan; bila target masih tertinggal atau wajah berubah, pecah video menjadi klip lebih pendek sebelum render ulang.</div><div class="actions" style="justify-content:flex-start"><button class="btn secondary" id="download-target-sheet">Unduh 1 lembar referensi target</button><button class="btn secondary" id="copy">Salin prompt</button></div><div class="prompt" id="prompt">'+esc(S.prompt)+'</div><div class="notice">Jika generator tidak menerima lembar gabungan, gunakan satu capture target paling jelas sebagai alternatif. Penggantian video dilakukan di aplikasi eksternal.</div>',
  true,"Selesai");
  document.getElementById("next").onclick=()=>{current=0;render()};
  document.getElementById("copy").onclick=async()=>{await navigator.clipboard.writeText(S.prompt);document.getElementById("copy").textContent="Tersalin ✓"};
@@ -307,10 +307,12 @@ function makePrompt(){
   const verified=(a?.selections||[]).map((selected,j)=>{
    const r=a.results?.[j],numbers=Array.isArray(selected)?selected:(selected==null?[]:[selected]);
    const people=numbers.map(n=>{const p=r?.candidates?.find(x=>Number(x.index)===Number(n));return "kandidat #"+n+(Number.isFinite(p?.traitScore)? " (skor kecocokan deskripsi AI "+Math.round(p.traitScore*100)+"/100)": "");}).join(", ");
+   const answers=a?.candidateAnswers||{};
+   const no=(r?.candidates||[]).filter(p=>answers[j+":"+p.index]==="no").map(p=>"#"+p.index).join(", ")||"tidak ada";
    const filename=t.captures?.[j]?.name||r?.name||("Capture "+(j+1));
-   return "Capture "+(j+1)+" ("+filename+"): "+people+" dikonfirmasi YA oleh pengguna.";
+   return "Capture "+(j+1)+" ("+filename+"): kandidat YA "+(people||"tidak tercatat")+"; kandidat TIDAK "+no+".";
   }).join("\n");
-  return "TARGET "+(i+1)+": "+t.description+"\nPETA REFERENSI TERKONFIRMASI:\n"+verified+"\nSemua kandidat YA adalah orang yang memang ditandai pengguna sebagai target. Kandidat yang dijawab TIDAK harus tetap asli dan tidak boleh diganti.";
+  return "TARGET "+(i+1)+": "+t.description+"\nPETA REFERENSI TERKONFIRMASI (pilihan pengguna, bukan keputusan AI):\n"+verified+"\nSemua kandidat YA adalah target sesuai konfirmasi pengguna. Semua kandidat TIDAK wajib dipertahankan sebagai orang asli. Skor AI hanya petunjuk deskriptif, bukan bukti identitas.";
  }).join("\n\n");
  const isFaceOnly=S.outfit==="video"&&S.background==="original";
  const replaceMode=isFaceOnly?"GANTI WAJAH SAJA":"GANTI SELURUH KARAKTER";
@@ -333,10 +335,11 @@ function makePrompt(){
 PETA TARGET TERKONFIRMASI
 ${targets}
 
-REFERENSI YANG DIUNGGAH
-1. Video sumber: acuan urutan adegan, gerakan, ekspresi, kamera, timing, dan tampilan asli.
-2. Satu lembar gabungan target: berisi potongan orang yang sudah dipilih YA oleh pengguna. Gunakan untuk mengenali target yang sama pada video, bukan sebagai karakter pengganti.
-3. Foto/Character Sheet karakter pengganti: satu-satunya acuan identitas karakter baru.
+PEMETAAN LAMPIRAN — PERIKSA SEBELUM GENERATE
+1. VIDEO SUMBER: gunakan video yang diunggah sebagai sumber adegan dan gerakan.
+2. LEMBAR GABUNGAN TARGET: gunakan hanya untuk mencocokkan orang target yang telah dipilih YA. Ini BUKAN identitas karakter pengganti.
+3. CHARACTER SHEET / FOTO PENGGANTI: gunakan hanya sebagai sumber identitas karakter baru.
+PENTING UNTUK GENERATOR YANG MENDUKUNG @ IMAGE REFERENCE: setelah semua gambar terunggah, ketik @ pada kolom prompt dan PILIH thumbnail Character Sheet sebagai referensi identitas pengganti, lalu PILIH thumbnail lembar gabungan target sebagai referensi identifikasi target. Jangan menebak nomor image 1/image 2 karena urutan dapat berubah. Pastikan kedua referensi benar-benar terpilih/tertaut sebelum menekan Generate. Jika thumbnail hilang atau tidak dapat dipilih, hentikan proses dan unggah ulang; jangan lanjutkan dengan asumsi gambar tetap terpasang.
 Jangan tertukar antara lembar target dan foto karakter pengganti. Jangan meminta pengguna mengunggah semua capture satu per satu jika lembar gabungan sudah tersedia.
 
 ATURAN IDENTIFIKASI TARGET
@@ -363,7 +366,10 @@ KUNCI IDENTITAS WAJAH KARAKTER PENGGANTI — PRIORITAS MUTLAK
 - KUNCI KUMIS/JENGGOT: rambut wajah (kumis, jenggot, jambang, goatee, stubble/bayangan jenggot) wajib mengikuti foto referensi karakter pengganti, bukan wajah target asli. Jika karakter pengganti pada referensi bersih tanpa kumis dan jenggot, hasil harus clean-shaven di SEMUA frame. Jangan menambahkan atau mempertahankan kumis/jenggot milik karakter asli. Jika referensi memang memiliki rambut wajah, pertahankan bentuk dan kepadatannya secara konsisten.
 - Wajah pengganti harus orang yang sama dan mudah dikenali pada setiap frame. Jangan berubah menjadi wajah lain saat sudut, ekspresi, outfit, pencahayaan, atau adegan berubah.
 - Jangan membuat wajah generik, mempercantik, mengubah usia, mengubah proporsi, menggabungkan dua identitas, atau melakukan face morphing.
-- Jika generator tidak mampu mempertahankan wajah referensi dengan stabil, jangan mengarang wajah alternatif; proses klip pendek per adegan dan gunakan referensi identitas yang sama.
+- IDENTITAS PENGGANTI BERSIFAT UNIVERSAL: semua ciri yang benar-benar tampak pada Character Sheet wajib dipertahankan, termasuk ada/tidaknya kumis, jenggot, jambang, stubble, kacamata, tato, gaya rambut, dan aksesori. Jangan menetapkan ciri yang tidak terlihat atau mengubah ciri yang memang ada pada referensi.
+- DILARANG TRANSFER FITUR: jangan menyalin rambut wajah, bentuk rahang, garis rambut, warna kulit, usia tampak, atau aksesori dari aktor asli ke karakter pengganti. Jangan menghapus fitur yang memang dimiliki karakter pengganti.
+- Terapkan identitas pengganti yang sama pada setiap kemunculan target, termasuk close-up, wide shot, shot kelompok, dan kemunculan singkat.
+- Jika generator tidak mampu mempertahankan wajah referensi dengan stabil atau tidak mampu mengganti seluruh kemunculan, jangan mengarang wajah alternatif; proses klip pendek per adegan dan gunakan referensi identitas yang sama.
 
 ${outfit}
 ${background}
