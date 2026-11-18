@@ -351,6 +351,9 @@ function makePrompt(){
 DESKRIPSI TARGET
 ${targetDescriptions}
 
+HASIL ANALISIS VIDEO BROWSER
+${S.videoAnalysis?S.videoAnalysis.tracks.filter(t=>S.selectedTrackIds.includes(t.id)).map(t=>"Kandidat "+t.label+" terdeteksi pada "+t.times.map(formatTime).join(", ")+".").join("\n"):"Belum ada data analisis."}
+
 REFERENSI
 - VIDEO SUMBER: acuan untuk menentukan orang yang terlihat, adegan, gerakan, timing, kamera, dan kontinuitas.
 - FOTO REFERENSI / CHARACTER SHEET: satu-satunya acuan identitas karakter pengganti. ${sheet}
@@ -380,7 +383,9 @@ function go(dir){
   if(current===1){
    S.targetCount=Number(S.targetCount);initTargets();
    document.querySelectorAll("textarea[id^=td]").forEach((e,i)=>{if(S.targets[i])S.targets[i].description=e.value});
-   if(S.targets.some(t=>!t.description.trim())){alert("Jelaskan siapa target yang akan diganti terlebih dahulu.");return;}
+   if(!S.videoAnalysis){alert("Analisis video belum dilakukan. Klik Analisis video sekarang terlebih dahulu.");return;}
+   if(S.targets.some(t=>!t.description.trim())){alert("Jelaskan target agar AI dapat memberi rekomendasi.");return;}
+   if(S.selectedTrackIds.length!==S.targetCount){alert("Pilih kandidat karakter sesuai jumlah target.");return;}
   }
   if(current===2&&S.targets.some(t=>!t.photos.length||!t.fullbody)){alert("Setiap karakter pengganti wajib memiliki foto referensi dan konfirmasi foto full-body.");return;}
   if(current===5&&S.sheet==="yes"&&S.sheetIssue&&!S.sheetRevisionUploaded){alert("Setelah memilih jenis kesalahan, generate ulang dengan prompt revisi dan unggah hasil Character Sheet yang baru.");return;}
